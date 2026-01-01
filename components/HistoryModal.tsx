@@ -42,10 +42,12 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ onClose }) => {
     // Calculate Raw Values
     const baseRaw = result.Wbase.fixedValue + result.Wbase.bias;
     const finalRaw = result.Wfinal.fixedValue + result.Wfinal.bias;
-    const grossPercent = baseRaw > 0 ? (100 * (baseRaw - finalRaw) / baseRaw) : 0;
+    
+    // Use grossPercent if available (new format), else calculate on fly (old format)
+    const grossPercent = result.grossPercent ?? (baseRaw > 0 ? (100 * (baseRaw - finalRaw) / baseRaw) : 0);
 
     const reportText = [
-      `*${t('appTitle')} Report*`,
+      `*${t('appTitle')} ${t('reportHeader')}*`,
       `------------------`,
       `${t('vessel')}: ${report.vesselName}`,
       `${t('operator')}: ${report.operatorName}`,
@@ -53,20 +55,20 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ onClose }) => {
       `${t('loadNum')}: ${report.loadNumber || '-'}`,
       `${t('dredgeArea')}: ${report.dredgeArea || '-'}`,
       ``,
-      `*${t('base')} Measurement*`,
-      `Gross: ${baseRaw.toFixed(1)}g`,
-      `Tare: -${result.Wbase.bias.toFixed(1)}g`,
-      `*Net: ${result.Wbase.fixedValue.toFixed(1)}g* (±${result.Wbase.errorBand95.toFixed(2)})`,
+      `*${t('base')} ${t('value')}*`,
+      `${t('grossVal')}: ${baseRaw.toFixed(1)}g`,
+      `${t('tareVal')}: -${result.Wbase.bias.toFixed(1)}g`,
+      `*${t('netVal')}: ${result.Wbase.fixedValue.toFixed(1)}g* (±${result.Wbase.errorBand95.toFixed(2)})`,
       ``,
-      `*${t('final')} Measurement*`,
-      `Gross: ${finalRaw.toFixed(1)}g`,
-      `Tare: -${result.Wfinal.bias.toFixed(1)}g`,
-      `*Net: ${result.Wfinal.fixedValue.toFixed(1)}g* (±${result.Wfinal.errorBand95.toFixed(2)})`,
+      `*${t('final')} ${t('value')}*`,
+      `${t('grossVal')}: ${finalRaw.toFixed(1)}g`,
+      `${t('tareVal')}: -${result.Wfinal.bias.toFixed(1)}g`,
+      `*${t('netVal')}: ${result.Wfinal.fixedValue.toFixed(1)}g* (±${result.Wfinal.errorBand95.toFixed(2)})`,
       ``,
-      `*${typeLabel}: ${result.percent.toFixed(2)}%* (Net)`,
-      `Gross Change: ${grossPercent.toFixed(2)}%`,
+      `*${typeLabel}: ${result.percent.toFixed(2)}%* (${t('netVal')})`,
+      `${t('grossVal')} ${t('change')}: ${grossPercent.toFixed(2)}%`,
       `${t('range')}: ${minRange.toFixed(2)}% — ${maxRange.toFixed(2)}%`,
-      `_(±${result.errorBand95Percent.toFixed(2)}% 95% Conf)_`,
+      `_(±${result.errorBand95Percent.toFixed(2)}% ${t('conf')})_`,
       ``,
       `_${t('disclaimer')}_`
     ].join('\n');
@@ -79,13 +81,13 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ onClose }) => {
       <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col animate-in fade-in zoom-in duration-200 border border-gray-200 dark:border-slate-800">
         
         {/* Header */}
-        <div className="p-4 border-b border-gray-200 dark:border-slate-800 flex justify-between items-center bg-gray-50 dark:bg-slate-800 rounded-t-xl">
-          <h2 className="font-bold text-xl text-gray-800 dark:text-gray-100 flex items-center gap-2">
-            <Calendar size={24} className="text-nautical-700 dark:text-nautical-400"/>
+        <div className="p-5 border-b border-gray-200 dark:border-slate-800 flex justify-between items-center bg-gray-50 dark:bg-slate-800 rounded-t-xl">
+          <h2 className="font-bold text-2xl text-gray-800 dark:text-gray-100 flex items-center gap-2">
+            <Calendar size={28} className="text-nautical-700 dark:text-nautical-400"/>
             {t('histCalc')}
           </h2>
           <button onClick={onClose} className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors">
-            <X size={28} />
+            <X size={32} />
           </button>
         </div>
 
@@ -104,10 +106,10 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ onClose }) => {
               return (
               <div key={report.id} className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
                 {/* Card Header: Vessel & Date */}
-                <div className="flex justify-between items-start mb-3 pb-3 border-b border-gray-100 dark:border-slate-800">
+                <div className="flex justify-between items-start mb-4 pb-4 border-b border-gray-100 dark:border-slate-800">
                   <div>
-                    <div className="font-bold text-nautical-900 dark:text-nautical-100 text-xl">{report.vesselName}</div>
-                    <div className="text-sm text-gray-500 dark:text-gray-400">{new Date(report.createdAt).toLocaleString()}</div>
+                    <div className="font-bold text-nautical-900 dark:text-nautical-100 text-2xl mb-1">{report.vesselName}</div>
+                    <div className="text-base text-gray-500 dark:text-gray-400">{new Date(report.createdAt).toLocaleString()}</div>
                   </div>
                   <div className="flex gap-2">
                     <button 
@@ -115,14 +117,14 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ onClose }) => {
                       className="p-3 text-gray-400 dark:text-slate-600 hover:text-green-500 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-slate-800 rounded-full transition-colors"
                       title={t('sendWhatsapp')}
                     >
-                      <Share2 size={24} />
+                      <Share2 size={28} />
                     </button>
                     <button 
                       onClick={() => deleteReport(report.id)} 
                       className="p-3 text-gray-400 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-slate-800 rounded-full transition-colors"
                       title="Delete Report"
                     >
-                      <Trash2 size={24} />
+                      <Trash2 size={28} />
                     </button>
                   </div>
                 </div>
@@ -131,15 +133,15 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ onClose }) => {
                 <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-base mb-4 text-gray-700 dark:text-gray-300">
                   <div className="flex flex-col">
                     <span className="text-xs uppercase text-gray-400 dark:text-gray-500 font-bold">{t('operator')}</span>
-                    <span className="truncate font-semibold">{report.operatorName}</span>
+                    <span className="truncate font-bold text-lg">{report.operatorName}</span>
                   </div>
                   <div className="flex flex-col">
                     <span className="text-xs uppercase text-gray-400 dark:text-gray-500 font-bold">{t('loadNum')}</span>
-                    <span className="truncate font-semibold">{report.loadNumber || '-'}</span>
+                    <span className="truncate font-bold text-lg">{report.loadNumber || '-'}</span>
                   </div>
                   <div className="flex flex-col col-span-2">
                     <span className="text-xs uppercase text-gray-400 dark:text-gray-500 font-bold">{t('dredgeArea')}</span>
-                    <span className="truncate font-semibold">{report.dredgeArea || '-'}</span>
+                    <span className="truncate font-bold text-lg">{report.dredgeArea || '-'}</span>
                   </div>
                 </div>
 
@@ -147,10 +149,10 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ onClose }) => {
                 <div className="bg-slate-50 dark:bg-slate-800 rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
                   
                   {/* Weights Row */}
-                  <div className="flex items-center justify-between p-3 border-b border-slate-200 dark:border-slate-700">
+                  <div className="flex items-center justify-between p-4 border-b border-slate-200 dark:border-slate-700">
                     <div className="flex flex-col items-center w-5/12">
-                      <span className="text-xs text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">{t('base')}</span>
-                      <span className="font-mono font-bold text-slate-700 dark:text-slate-200 text-xl">
+                      <span className="text-xs text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider mb-1">{t('base')}</span>
+                      <span className="font-mono font-bold text-slate-700 dark:text-slate-200 text-2xl">
                         {report.result.Wbase.fixedValue.toFixed(1)}<span className="text-sm">g</span>
                       </span>
                       <span className="text-xs text-slate-400 dark:text-slate-500 font-mono">
@@ -159,12 +161,12 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ onClose }) => {
                     </div>
 
                     <div className="w-2/12 flex justify-center text-slate-300 dark:text-slate-600">
-                      {direction === 'rtl' ? <ArrowRight size={24} className="rotate-180" /> : <ArrowRight size={24} />}
+                      {direction === 'rtl' ? <ArrowRight size={32} className="rotate-180" /> : <ArrowRight size={32} />}
                     </div>
 
                     <div className="flex flex-col items-center w-5/12">
-                      <span className="text-xs text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">{t('final')}</span>
-                      <span className="font-mono font-bold text-slate-700 dark:text-slate-200 text-xl">
+                      <span className="text-xs text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider mb-1">{t('final')}</span>
+                      <span className="font-mono font-bold text-slate-700 dark:text-slate-200 text-2xl">
                         {report.result.Wfinal.fixedValue.toFixed(1)}<span className="text-sm">g</span>
                       </span>
                       <span className="text-xs text-slate-400 dark:text-slate-500 font-mono">
@@ -174,12 +176,12 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ onClose }) => {
                   </div>
 
                   {/* Result Highlight */}
-                  <div className="p-4 text-center bg-white dark:bg-slate-900">
-                    <div className="text-xs text-gray-400 uppercase font-bold mb-1">{t('weightChange')}</div>
-                    <div className="text-3xl font-extrabold text-nautical-700 dark:text-nautical-300 leading-none mb-1 font-mono">
+                  <div className="p-5 text-center bg-white dark:bg-slate-900">
+                    <div className="text-sm text-gray-400 uppercase font-bold mb-2">{t('weightChange')}</div>
+                    <div className="text-4xl font-extrabold text-nautical-700 dark:text-nautical-300 leading-none mb-2 font-mono">
                       {report.result.percent.toFixed(2)}%
                     </div>
-                    <div className="text-sm font-medium text-blue-600 dark:text-blue-400 mb-2 font-mono">
+                    <div className="text-base font-medium text-blue-600 dark:text-blue-400 mb-2 font-mono">
                        ± {report.result.errorBand95Percent.toFixed(2)}% <span className="text-gray-400 font-normal">({t('conf')})</span>
                     </div>
                   </div>

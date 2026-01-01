@@ -15,6 +15,7 @@ export class RatioCalculator {
             Wfinal: final,
             ratio: 0,
             percent: 0,
+            grossPercent: 0,
             sigmaRatio1Sigma: 0,
             errorBand95Ratio: 0,
             errorBand95Percent: 0,
@@ -28,6 +29,11 @@ export class RatioCalculator {
     // Ratio = (Wb - Wf) / Wb = 1 - Wf/Wb
     const ratio = (Wb - Wf) / Wb;
     const percent = 100 * ratio;
+
+    // Gross Calculation
+    const baseRaw = base.fixedValue + base.bias;
+    const finalRaw = final.fixedValue + final.bias;
+    const grossPercent = baseRaw > 0 ? (100 * (baseRaw - finalRaw) / baseRaw) : 0;
 
     // Uncertainty Propagation
     // Partial dR/dWb = Wf / Wb^2
@@ -59,6 +65,7 @@ export class RatioCalculator {
         Wfinal: final,
         ratio,
         percent,
+        grossPercent,
         sigmaRatio1Sigma,
         errorBand95Ratio,
         errorBand95Percent,

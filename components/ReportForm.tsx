@@ -100,13 +100,15 @@ export const ReportForm: React.FC<ReportFormProps> = ({ result, onSaved }) => {
     const minRange = result.percent - result.errorBand95Percent;
     const maxRange = result.percent + result.errorBand95Percent;
 
-    // Calculate Raw Values
+    // Calculate Raw Values for display
     const baseRaw = result.Wbase.fixedValue + result.Wbase.bias;
     const finalRaw = result.Wfinal.fixedValue + result.Wfinal.bias;
-    const grossPercent = baseRaw > 0 ? (100 * (baseRaw - finalRaw) / baseRaw) : 0;
+    
+    // Use standard gross percent
+    const grossPercent = result.grossPercent;
 
     const reportText = [
-      `*${t('appTitle')} Report*`,
+      `*${t('appTitle')} ${t('reportHeader')}*`,
       `------------------`,
       `${t('vessel')}: ${formData.vesselName}`,
       `${t('operator')}: ${formData.operatorName}`,
@@ -114,20 +116,20 @@ export const ReportForm: React.FC<ReportFormProps> = ({ result, onSaved }) => {
       `${t('loadNum')}: ${formData.loadNumber || '-'}`,
       `${t('dredgeArea')}: ${formData.dredgeArea || '-'}`,
       ``,
-      `*${t('base')} Measurement*`,
-      `Gross: ${baseRaw.toFixed(1)}g`,
-      `Tare: -${result.Wbase.bias.toFixed(1)}g`,
-      `*Net: ${result.Wbase.fixedValue.toFixed(1)}g* (±${result.Wbase.errorBand95.toFixed(2)})`,
+      `*${t('base')} ${t('value')}*`,
+      `${t('grossVal')}: ${baseRaw.toFixed(1)}g`,
+      `${t('tareVal')}: -${result.Wbase.bias.toFixed(1)}g`,
+      `*${t('netVal')}: ${result.Wbase.fixedValue.toFixed(1)}g* (±${result.Wbase.errorBand95.toFixed(2)})`,
       ``,
-      `*${t('final')} Measurement*`,
-      `Gross: ${finalRaw.toFixed(1)}g`,
-      `Tare: -${result.Wfinal.bias.toFixed(1)}g`,
-      `*Net: ${result.Wfinal.fixedValue.toFixed(1)}g* (±${result.Wfinal.errorBand95.toFixed(2)})`,
+      `*${t('final')} ${t('value')}*`,
+      `${t('grossVal')}: ${finalRaw.toFixed(1)}g`,
+      `${t('tareVal')}: -${result.Wfinal.bias.toFixed(1)}g`,
+      `*${t('netVal')}: ${result.Wfinal.fixedValue.toFixed(1)}g* (±${result.Wfinal.errorBand95.toFixed(2)})`,
       ``,
-      `*${typeLabel}: ${result.percent.toFixed(2)}%* (Net)`,
-      `Gross Change: ${grossPercent.toFixed(2)}%`,
+      `*${typeLabel}: ${result.percent.toFixed(2)}%* (${t('netVal')})`,
+      `${t('grossVal')} ${t('change')}: ${grossPercent.toFixed(2)}%`,
       `${t('range')}: ${minRange.toFixed(2)}% — ${maxRange.toFixed(2)}%`,
-      `_(±${result.errorBand95Percent.toFixed(2)}% 95% Conf)_`,
+      `_(±${result.errorBand95Percent.toFixed(2)}% ${t('conf')})_`,
       ``,
       `_${t('disclaimer')}_`
     ].join('\n');

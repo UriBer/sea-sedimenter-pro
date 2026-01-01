@@ -55,6 +55,7 @@ export interface RatioResult {
 
   ratio: number; // (Wb - Wf)/Wb
   percent: number; // 100*ratio
+  grossPercent: number; // 100 * (RawBase - RawFinal)/RawBase
 
   // uncertainty propagation
   sigmaRatio1Sigma: number;
