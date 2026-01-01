@@ -1,0 +1,80 @@
+import { SessionResult, RatioResult } from '../types';
+import { getKFactorFromN } from '../utils/kFactor';
+
+export class RatioCalculator {
+  static calculate(base: SessionResult, final: SessionResult): RatioResult {
+    const Wb = base.fixedValue;
+    const Wf = final.fixedValue;
+    const notes: string[] = [];
+
+    if (Wb <= 0) {
+        notes.push("Base weight <= 0. Cannot compute ratio.");
+        return {
+            Wbase: base,
+            Wfinal: final,
+            ratio: 0,
+            percent: 0,
+            grossPercent: 0,
+            sigmaRatio1Sigma: 0,
+            errorBand95Ratio: 0,
+            errorBand95Percent: 0,
+            relativeErrorPercent95: 0,
+            k95: 2,
+            nEff: 0,
+            notes
+        };
+    }
+
+    // Ratio = (Wb - Wf) / Wb = 1 - Wf/Wb
+    const ratio = (Wb - Wf) / Wb;
+    const percent = 100 * ratio;
+
+    // Gross Calculation
+    // In new logic, measurements have rawReading and modelBiasUsed.
+    // SessionResult.bias is the nominal bias (intercept).
+    // Let's use the nominal bias for the "Raw" display approximation.
+    const baseRaw = base.fixedValue + base.bias;
+    const finalRaw = final.fixedValue + final.bias;
+    const grossPercent = baseRaw > 0 ? (100 * (baseRaw - finalRaw) / baseRaw) : 0;
+
+    // Uncertainty Propagation
+    // Partial dR/dWb = Wf / Wb^2
+    // Partial dR/dWf = -1 / Wb
+    
+    const sigmaWb = base.sigmaTotal;
+    const sigmaWf = final.sigmaTotal;
+
+    const term1 = (Wf / (Wb * Wb)) * sigmaWb;
+    const term2 = (1 / Wb) * sigmaWf;
+    
+    const sigmaRatio1Sigma = Math.sqrt(Math.pow(term1, 2) + Math.pow(term2, 2));
+
+    // Effective n for k-factor
+    const nEff = Math.min(base.nTrim, final.nTrim);
+    const k95 = getKFactorFromN(nEff);
+
+    const errorBand95Ratio = k95 * sigmaRatio1Sigma;
+    const errorBand95Percent = 100 * errorBand95Ratio;
+    
+    const relativeErrorPercent95 = (errorBand95Percent / Math.abs(percent)) * 100;
+
+    if (nEff < 3) {
+        notes.push("Low effective sample size. Uncertainty band is wide.");
+    }
+
+    return {
+        Wbase: base,
+        Wfinal: final,
+        ratio,
+        percent,
+        grossPercent,
+        sigmaRatio1Sigma,
+        errorBand95Ratio,
+        errorBand95Percent,
+        relativeErrorPercent95,
+        k95,
+        nEff,
+        notes
+    };
+  }
+}

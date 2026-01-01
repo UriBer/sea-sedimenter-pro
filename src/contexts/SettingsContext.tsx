@@ -1,67 +1,73 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { Language, Direction, translations } from '../locales';
+import React, { createContext, useContext, useState, ReactNode, useEffect } from 'react';
+import { translations, Language, Direction } from '../locales';
 
-interface SettingsContextProps {
-  language: Language;
-  direction: Direction;
+interface SettingsContextType {
   isDarkMode: boolean;
   toggleTheme: () => void;
+  language: Language;
   setLanguage: (lang: Language) => void;
-  t: (key: keyof typeof translations['en']) => string;
+  direction: Direction;
+  t: (key: string) => string;
 }
 
-const SettingsContext = createContext<SettingsContextProps | undefined>(undefined);
+const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
 
 export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [language, setLangState] = useState<Language>('en');
-  const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [language, setLanguage] = useState<Language>('en');
 
   useEffect(() => {
     // Load persisted settings
     const savedLang = localStorage.getItem('sea_sed_lang') as Language;
-    if (savedLang && translations[savedLang]) {
-      setLangState(savedLang);
+    if (savedLang && ['en', 'he', 'ar', 'ru'].includes(savedLang)) {
+      setLanguage(savedLang);
     }
-
     const savedTheme = localStorage.getItem('sea_sed_theme');
-    if (savedTheme === 'dark' || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches)) {
+    if (savedTheme === 'dark') {
       setIsDarkMode(true);
       document.documentElement.classList.add('dark');
-    } else {
-      setIsDarkMode(false);
-      document.documentElement.classList.remove('dark');
     }
   }, []);
 
-  const setLanguage = (lang: Language) => {
-    setLangState(lang);
+  const handleSetLanguage = (lang: Language) => {
+    setLanguage(lang);
     localStorage.setItem('sea_sed_lang', lang);
+    const dir = (lang === 'he' || lang === 'ar') ? 'rtl' : 'ltr';
+    document.documentElement.dir = dir;
+    document.documentElement.lang = lang;
   };
 
   const toggleTheme = () => {
-    const newMode = !isDarkMode;
-    setIsDarkMode(newMode);
-    localStorage.setItem('sea_sed_theme', newMode ? 'dark' : 'light');
-    if (newMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
-    }
+    setIsDarkMode(prev => {
+      const next = !prev;
+      if (next) {
+        document.documentElement.classList.add('dark');
+        localStorage.setItem('sea_sed_theme', 'dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+        localStorage.setItem('sea_sed_theme', 'light');
+      }
+      return next;
+    });
+  };
+
+  const t = (key: string): string => {
+    const dict = translations[language] || translations['en'];
+    // @ts-ignore
+    return dict[key] || key;
   };
 
   const direction: Direction = (language === 'he' || language === 'ar') ? 'rtl' : 'ltr';
 
-  useEffect(() => {
-    document.documentElement.dir = direction;
-    document.documentElement.lang = language;
-  }, [direction, language]);
-
-  const t = (key: keyof typeof translations['en']) => {
-    return translations[language][key] || translations['en'][key] || key;
-  };
-
   return (
-    <SettingsContext.Provider value={{ language, direction, isDarkMode, toggleTheme, setLanguage, t }}>
+    <SettingsContext.Provider value={{ 
+      isDarkMode, 
+      toggleTheme, 
+      language, 
+      setLanguage: handleSetLanguage, 
+      direction, 
+      t 
+    }}>
       {children}
     </SettingsContext.Provider>
   );
@@ -69,8 +75,6 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
 
 export const useSettings = () => {
   const context = useContext(SettingsContext);
-  if (!context) {
-    throw new Error("useSettings must be used within a SettingsProvider");
-  }
+  if (!context) throw new Error("useSettings must be used within SettingsProvider");
   return context;
 };
