@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { MeasurementSession } from '../session/MeasurementSession';
-import { SessionResult, TareModel, IMUSnapshot, Measurement } from '../types';
+import { SessionResult, TareModel, IMUSnapshot, Measurement, SessionSensorStats } from '../types';
 import { Trash2, Plus, Play, Square, CheckCircle, Smartphone } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContext';
 
@@ -8,6 +8,8 @@ interface SessionPanelProps {
   title: string;
   tareModel: TareModel | null;
   sensorSnapshot: () => IMUSnapshot | undefined;
+  startSensorLog: () => void;
+  stopSensorLog: () => SessionSensorStats | undefined;
   existingResult: SessionResult | null;
   onComplete: (result: SessionResult) => void;
   onReset: () => void;
@@ -18,7 +20,9 @@ interface SessionPanelProps {
 export const SessionPanel: React.FC<SessionPanelProps> = ({ 
   title, 
   tareModel, 
-  sensorSnapshot, 
+  sensorSnapshot,
+  startSensorLog,
+  stopSensorLog,
   existingResult, 
   onComplete,
   onReset,
@@ -38,6 +42,7 @@ export const SessionPanel: React.FC<SessionPanelProps> = ({
     session.clear();
     setMeasurements([]);
     setIsRecording(true);
+    startSensorLog(); // Start continuous logging
   };
 
   const handleAdd = (e: React.FormEvent) => {
@@ -60,7 +65,9 @@ export const SessionPanel: React.FC<SessionPanelProps> = ({
 
   const stopSession = () => {
     if (!tareModel) return;
-    const res = session.calculateResult(tareModel);
+    const stats = stopSensorLog(); // Stop continuous logging
+    
+    const res = session.calculateResult(tareModel, stats);
     const uiResult: SessionResult = {
         ...res,
         kind,
@@ -161,7 +168,7 @@ export const SessionPanel: React.FC<SessionPanelProps> = ({
               </div>
 
               <div className="flex gap-3 mt-4">
-                 <button onClick={() => setIsRecording(false)} className="px-4 py-3 text-red-500 hover:text-red-400 text-base font-bold bg-white dark:bg-transparent border border-gray-200 dark:border-slate-700 rounded-lg">{t('cancel')}</button>
+                 <button onClick={() => { setIsRecording(false); stopSensorLog(); }} className="px-4 py-3 text-red-500 hover:text-red-400 text-base font-bold bg-white dark:bg-transparent border border-gray-200 dark:border-slate-700 rounded-lg">{t('cancel')}</button>
                  <button 
                     onClick={stopSession} 
                     disabled={measurements.length === 0}

@@ -1,4 +1,4 @@
-import { Measurement, SessionResult, TareModel, IMUSnapshot } from '../types';
+import { Measurement, SessionResult, TareModel, IMUSnapshot, SessionSensorStats } from '../types';
 import { calculateMean, calculateMedian, calculateStdDev } from '../utils/math';
 import { getKFactorFromN } from '../utils/kFactor';
 
@@ -35,7 +35,7 @@ export class MeasurementSession {
     return [...this.measurements];
   }
 
-  calculateResult(tareModel: TareModel, trimFraction: number = 0.10): Omit<SessionResult, 'kind'> {
+  calculateResult(tareModel: TareModel, sensorStats?: SessionSensorStats, trimFraction: number = 0.10): Omit<SessionResult, 'kind'> {
     const n = this.measurements.length;
     
     // Sort measurements by adjusted value to trim outliers
@@ -94,7 +94,9 @@ export class MeasurementSession {
       sigmaTotal,
       kFactor,
       errorBand95,
-      bias: tareModel.bias
+      bias: tareModel.bias,
+      sensorStats,
+      imuSlope: tareModel.slopeK
     };
   }
 

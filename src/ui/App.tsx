@@ -129,6 +129,8 @@ const App: React.FC = () => {
                 title={t('baseMeas')} 
                 tareModel={tareModel}
                 sensorSnapshot={sensors.captureSnapshot}
+                startSensorLog={sensors.startRecording}
+                stopSensorLog={sensors.stopRecording}
                 existingResult={baseResult}
                 onComplete={setBaseResult}
                 onReset={() => setBaseResult(null)}
@@ -140,6 +142,8 @@ const App: React.FC = () => {
                 title={t('finalMeas')} 
                 tareModel={tareModel}
                 sensorSnapshot={sensors.captureSnapshot}
+                startSensorLog={sensors.startRecording}
+                stopSensorLog={sensors.stopRecording}
                 existingResult={finalResult}
                 onComplete={setFinalResult}
                 onReset={() => setFinalResult(null)}

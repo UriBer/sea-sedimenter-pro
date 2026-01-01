@@ -1,13 +1,22 @@
 // --- SENSOR TYPES ---
 export interface IMUSnapshot {
-  ax: number;       // Raw X acceleration (m/s^2 or g)
-  ay: number;       // Raw Y acceleration
-  azRaw: number;    // Raw Z acceleration
+  ax: number;       // Smoothed X acceleration
+  ay: number;       // Smoothed Y acceleration
+  azRaw: number;    // Smoothed Z acceleration (device Z)
   az: number;       // Projected Vertical acceleration (m/s^2)
   azRms: number;    // RMS of az over window
-  roll?: number;    // Optional
-  pitch?: number;   // Optional
   timestamp: number;
+}
+
+export interface SessionSensorStats {
+  durationMs: number;
+  avgAx: number;
+  avgAy: number;
+  avgAz: number;
+  maxAz: number;
+  minAz: number;
+  avgRms: number;
+  maxRms: number;
 }
 
 // --- TARE TYPES ---
@@ -54,6 +63,9 @@ export interface SessionResult {
   meanRaw: number;       // Mean of raw readings (trimmed set)
   meanImuAdj: number;    // Mean of IMU corrections (trimmed set)
 
+  // Sensor Stats for this session
+  sensorStats?: SessionSensorStats;
+
   // Statistics
   nTrim: number;
   stdDev: number;        // Sample std dev
@@ -65,6 +77,7 @@ export interface SessionResult {
   errorBand95: number;   // k * sigmaTotal
   
   bias: number;          // Nominal bias (for display)
+  imuSlope?: number;     // If IMU was used, store slope k
   notes?: string[];
 }
 

@@ -103,6 +103,17 @@ export const ReportForm: React.FC<ReportFormProps> = ({ result, onSaved }) => {
     });
     return lines.join('\n');
   };
+  
+  const formatSensorStats = (res: SessionResult, title: string) => {
+      if (!res.sensorStats) return null;
+      const s = res.sensorStats;
+      return [
+          `*${title} Conditions:*`,
+          `  Duration: ${(s.durationMs/1000).toFixed(1)}s`,
+          `  Avg G: x=${s.avgAx.toFixed(3)}, y=${s.avgAy.toFixed(3)}, z=${s.avgAz.toFixed(3)}`,
+          `  Max Z: ${s.maxAz.toFixed(2)} | Min Z: ${s.minAz.toFixed(2)}`
+      ].join('\n');
+  };
 
   const handleWhatsApp = () => {
     persistData();
@@ -136,14 +147,16 @@ export const ReportForm: React.FC<ReportFormProps> = ({ result, onSaved }) => {
       `*${t('base')} ${t('value')}*`,
       `${t('grossVal')}: ${baseRaw.toFixed(1)}g`,
       `${t('tareVal')}: -${result.Wbase.bias.toFixed(1)}g`,
-      hasImu ? `${t('imuCorrection')}: -${baseImu.toFixed(2)}g` : null,
+      hasImu ? `${t('imuCorrection')}: -${baseImu.toFixed(2)}g (k=${result.Wbase.imuSlope?.toFixed(3)})` : null,
       `*${t('netVal')}: ${result.Wbase.fixedValue.toFixed(1)}g* (±${result.Wbase.errorBand95.toFixed(2)})`,
+      formatSensorStats(result.Wbase, t('base')),
       ``,
       `*${t('final')} ${t('value')}*`,
       `${t('grossVal')}: ${finalRaw.toFixed(1)}g`,
       `${t('tareVal')}: -${result.Wfinal.bias.toFixed(1)}g`,
-      hasImu ? `${t('imuCorrection')}: -${finalImu.toFixed(2)}g` : null,
+      hasImu ? `${t('imuCorrection')}: -${finalImu.toFixed(2)}g (k=${result.Wfinal.imuSlope?.toFixed(3)})` : null,
       `*${t('netVal')}: ${result.Wfinal.fixedValue.toFixed(1)}g* (±${result.Wfinal.errorBand95.toFixed(2)})`,
+      formatSensorStats(result.Wfinal, t('final')),
       ``,
       `*${typeLabel}: ${result.percent.toFixed(2)}%* (${t('netVal')})`,
       `${t('grossVal')} ${t('change')}: ${grossPercent.toFixed(2)}%`,
