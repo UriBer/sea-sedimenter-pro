@@ -1,0 +1,5 @@
+{
+  "name": "Sea Sedimenter",
+  "description": "A shipboard weighing assistant for sediment analysis with robust uncertainty calculation.",
+  "requestFramePermissions": []
+}
