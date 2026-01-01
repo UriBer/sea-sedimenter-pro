@@ -50,6 +50,10 @@ export interface SessionResult {
   measurements: Measurement[];
   fixedValue: number;    // The final mass estimate (grams)
   
+  // Breakdown
+  meanRaw: number;       // Mean of raw readings (trimmed set)
+  meanImuAdj: number;    // Mean of IMU corrections (trimmed set)
+
   // Statistics
   nTrim: number;
   stdDev: number;        // Sample std dev

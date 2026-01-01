@@ -14,32 +14,17 @@ export const ResultCard: React.FC<ResultCardProps> = ({ result, onReset }) => {
   const minRange = result.percent - result.errorBand95Percent;
   const maxRange = result.percent + result.errorBand95Percent;
 
-  // Reconstruct Raw values for display table
-  // Corrected = Raw - Bias  =>  Raw = Corrected + Bias
-  const baseRaw = result.Wbase.fixedValue + result.Wbase.bias;
-  const finalRaw = result.Wfinal.fixedValue + result.Wfinal.bias;
+  // Use calculated means from SessionResult for consistency
+  const baseRaw = result.Wbase.meanRaw;
+  const finalRaw = result.Wfinal.meanRaw;
   
-  // Use pre-calculated gross percentage
-  const grossPercent = result.grossPercent;
-  
-  // Calculate average IMU adjustment delta
-  // Delta = RawReading - Bias - AdjustedValue
-  // If no IMU used, RawReading - Bias = AdjustedValue, so Delta = 0.
-  const calculateImuAdjMean = (res: SessionResult) => {
-      if (res.measurements.length === 0) return 0;
-      const totalDelta = res.measurements.reduce((sum, m) => {
-          // adj = raw - (bias + k*az)
-          // bias + k*az = raw - adj
-          // k*az (dynamic part) = raw - adj - bias
-          // We want to show the dynamic correction magnitude
-          return sum + (m.rawReading - m.adjustedValue - res.bias);
-      }, 0);
-      return totalDelta / res.measurements.length;
-  };
-
-  const baseImuAdj = calculateImuAdjMean(result.Wbase);
-  const finalImuAdj = calculateImuAdjMean(result.Wfinal);
+  // IMU Adjustments
+  const baseImuAdj = result.Wbase.meanImuAdj;
+  const finalImuAdj = result.Wfinal.meanImuAdj;
   const hasSignificantImu = Math.abs(baseImuAdj) > 0.01 || Math.abs(finalImuAdj) > 0.01;
+
+  // Gross Percent
+  const grossPercent = result.grossPercent;
 
   return (
     <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-blue-100 dark:border-slate-700 overflow-hidden mb-10 animate-fade-in transition-colors">
@@ -91,7 +76,7 @@ export const ResultCard: React.FC<ResultCardProps> = ({ result, onReset }) => {
                 <div className="font-bold text-center text-gray-600 dark:text-gray-300">{t('change')}</div>
             </div>
 
-            {/* Raw Row */}
+            {/* Raw Mean Row */}
             <div className="grid grid-cols-4 gap-3 items-center mb-3 min-w-[320px]">
                 <div className="text-sm font-bold text-gray-500 dark:text-gray-400">{t('raw')}</div>
                 <div className="text-center font-mono text-xl text-gray-800 dark:text-gray-200">{baseRaw.toFixed(1)}g</div>
@@ -121,7 +106,7 @@ export const ResultCard: React.FC<ResultCardProps> = ({ result, onReset }) => {
                 </div>
             )}
 
-            {/* Normalized Row */}
+            {/* Net Row */}
             <div className="grid grid-cols-4 gap-3 items-center pt-3 border-t border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded p-3 min-w-[320px]">
                 <div className="text-sm font-extrabold text-nautical-700 dark:text-nautical-400">{t('corrected')}</div>
                 <div className="text-center font-mono font-bold text-2xl text-nautical-900 dark:text-white">{result.Wbase.fixedValue.toFixed(1)}g</div>

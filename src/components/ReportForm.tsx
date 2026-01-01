@@ -112,10 +112,15 @@ export const ReportForm: React.FC<ReportFormProps> = ({ result, onSaved }) => {
     const minRange = result.percent - result.errorBand95Percent;
     const maxRange = result.percent + result.errorBand95Percent;
 
-    // Calculate Raw Values for display
-    const baseRaw = result.Wbase.fixedValue + result.Wbase.bias;
-    const finalRaw = result.Wfinal.fixedValue + result.Wfinal.bias;
+    // Use pre-calculated means from result object
+    const baseRaw = result.Wbase.meanRaw;
+    const finalRaw = result.Wfinal.meanRaw;
     
+    // Check IMU significant presence
+    const baseImu = result.Wbase.meanImuAdj;
+    const finalImu = result.Wfinal.meanImuAdj;
+    const hasImu = Math.abs(baseImu) > 0.01 || Math.abs(finalImu) > 0.01;
+
     // Use standard gross percent
     const grossPercent = result.grossPercent;
 
@@ -131,11 +136,13 @@ export const ReportForm: React.FC<ReportFormProps> = ({ result, onSaved }) => {
       `*${t('base')} ${t('value')}*`,
       `${t('grossVal')}: ${baseRaw.toFixed(1)}g`,
       `${t('tareVal')}: -${result.Wbase.bias.toFixed(1)}g`,
+      hasImu ? `${t('imuCorrection')}: -${baseImu.toFixed(2)}g` : null,
       `*${t('netVal')}: ${result.Wbase.fixedValue.toFixed(1)}g* (±${result.Wbase.errorBand95.toFixed(2)})`,
       ``,
       `*${t('final')} ${t('value')}*`,
       `${t('grossVal')}: ${finalRaw.toFixed(1)}g`,
       `${t('tareVal')}: -${result.Wfinal.bias.toFixed(1)}g`,
+      hasImu ? `${t('imuCorrection')}: -${finalImu.toFixed(2)}g` : null,
       `*${t('netVal')}: ${result.Wfinal.fixedValue.toFixed(1)}g* (±${result.Wfinal.errorBand95.toFixed(2)})`,
       ``,
       `*${typeLabel}: ${result.percent.toFixed(2)}%* (${t('netVal')})`,
@@ -149,7 +156,7 @@ export const ReportForm: React.FC<ReportFormProps> = ({ result, onSaved }) => {
       formatMeasurements(result.Wfinal, t('final')),
       ``,
       `_${t('disclaimer')}_`
-    ].join('\n');
+    ].filter(line => line !== null).join('\n');
 
     window.open(`https://wa.me/?text=${encodeURIComponent(reportText)}`, '_blank');
   };

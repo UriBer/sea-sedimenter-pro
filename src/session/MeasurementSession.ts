@@ -15,6 +15,7 @@ export class MeasurementSession {
 
     if (tareModel.method === 'imu-regression' && snapshot && tareModel.slopeK !== undefined) {
       // Dynamic bias: b + k * az
+      // We want to store the "correction" separately conceptually, but modelBiasUsed captures total subtraction.
       biasUsed = tareModel.bias + (tareModel.slopeK * snapshot.az);
       adjusted = val - biasUsed;
     }
@@ -36,20 +37,35 @@ export class MeasurementSession {
 
   calculateResult(tareModel: TareModel, trimFraction: number = 0.10): Omit<SessionResult, 'kind'> {
     const n = this.measurements.length;
-    const values = this.measurements.map(m => m.adjustedValue).sort((a,b) => a-b);
+    
+    // Sort measurements by adjusted value to trim outliers
+    // We trim based on the 'Net' value to remove statistical outliers in the final result
+    const sortedMeasurements = [...this.measurements].sort((a,b) => a.adjustedValue - b.adjustedValue);
     
     // Trimming
     let trimCount = Math.floor(trimFraction * n);
     // Ensure we have at least 1 sample
     if (n - 2 * trimCount < 1) trimCount = 0;
     
-    const trimmedValues = values.slice(trimCount, n - trimCount);
-    const nTrim = trimmedValues.length;
+    const trimmedMeasurements = sortedMeasurements.slice(trimCount, n - trimCount);
+    const nTrim = trimmedMeasurements.length;
+    const trimmedValues = trimmedMeasurements.map(m => m.adjustedValue);
 
-    // Central Value
+    // Central Value (Net)
     const mean = calculateMean(trimmedValues);
     const median = calculateMedian(trimmedValues);
     const fixedValue = nTrim >= 3 ? mean : median;
+
+    // --- Component Breakdown ---
+    // 1. Raw Mean
+    const rawValues = trimmedMeasurements.map(m => m.rawReading);
+    const meanRaw = calculateMean(rawValues);
+
+    // 2. IMU Adjustment Mean
+    // Correction = modelBiasUsed - nominalBias
+    // If no IMU, this is 0.
+    const imuCorrections = trimmedMeasurements.map(m => m.modelBiasUsed - tareModel.bias);
+    const meanImuAdj = calculateMean(imuCorrections);
 
     // Uncertainty
     const stdDev = calculateStdDev(trimmedValues, mean);
@@ -69,6 +85,8 @@ export class MeasurementSession {
     return {
       measurements: this.measurements,
       fixedValue,
+      meanRaw,
+      meanImuAdj,
       nTrim,
       stdDev,
       stdError,
