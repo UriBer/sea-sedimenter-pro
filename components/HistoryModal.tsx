@@ -39,6 +39,10 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ onClose }) => {
     const minRange = result.percent - result.errorBand95Percent;
     const maxRange = result.percent + result.errorBand95Percent;
 
+    // Calculate Raw Values
+    const baseRaw = result.Wbase.fixedValue + result.Wbase.bias;
+    const finalRaw = result.Wfinal.fixedValue + result.Wfinal.bias;
+
     const reportText = [
       `*${t('appTitle')} Report*`,
       `------------------`,
@@ -48,8 +52,15 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ onClose }) => {
       `${t('loadNum')}: ${report.loadNumber || '-'}`,
       `${t('dredgeArea')}: ${report.dredgeArea || '-'}`,
       ``,
-      `*${t('base')}:* ${result.Wbase.fixedValue.toFixed(1)}g (±${result.Wbase.errorBand95.toFixed(2)})`,
-      `*${t('final')}:* ${result.Wfinal.fixedValue.toFixed(1)}g (±${result.Wfinal.errorBand95.toFixed(2)})`,
+      `*${t('base')} Measurement*`,
+      `Raw: ${baseRaw.toFixed(1)}g`,
+      `Bias: -${result.Wbase.bias.toFixed(1)}g`,
+      `*Norm: ${result.Wbase.fixedValue.toFixed(1)}g* (±${result.Wbase.errorBand95.toFixed(2)})`,
+      ``,
+      `*${t('final')} Measurement*`,
+      `Raw: ${finalRaw.toFixed(1)}g`,
+      `Bias: -${result.Wfinal.bias.toFixed(1)}g`,
+      `*Norm: ${result.Wfinal.fixedValue.toFixed(1)}g* (±${result.Wfinal.errorBand95.toFixed(2)})`,
       ``,
       `*${typeLabel}: ${result.percent.toFixed(2)}%*`,
       `${t('range')}: ${minRange.toFixed(2)}% — ${maxRange.toFixed(2)}%`,
@@ -63,16 +74,16 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ onClose }) => {
 
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-slate-900 rounded-lg shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col animate-in fade-in zoom-in duration-200 border border-gray-200 dark:border-slate-800">
+      <div className="bg-white dark:bg-slate-900 rounded-xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col animate-in fade-in zoom-in duration-200 border border-gray-200 dark:border-slate-800">
         
         {/* Header */}
-        <div className="p-4 border-b border-gray-200 dark:border-slate-800 flex justify-between items-center bg-gray-50 dark:bg-slate-800 rounded-t-lg">
-          <h2 className="font-bold text-lg text-gray-800 dark:text-gray-100 flex items-center gap-2">
-            <Calendar size={20} className="text-nautical-700 dark:text-nautical-400"/>
+        <div className="p-4 border-b border-gray-200 dark:border-slate-800 flex justify-between items-center bg-gray-50 dark:bg-slate-800 rounded-t-xl">
+          <h2 className="font-bold text-xl text-gray-800 dark:text-gray-100 flex items-center gap-2">
+            <Calendar size={24} className="text-nautical-700 dark:text-nautical-400"/>
             {t('histCalc')}
           </h2>
-          <button onClick={onClose} className="text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors">
-            <X size={24} />
+          <button onClick={onClose} className="p-2 text-gray-500 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors">
+            <X size={28} />
           </button>
         </div>
 
@@ -80,8 +91,8 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ onClose }) => {
         <div className="overflow-y-auto p-4 space-y-4 flex-1 bg-gray-100/50 dark:bg-slate-950">
           {reports.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-64 text-gray-400 dark:text-gray-500 space-y-2">
-              <Anchor size={48} className="opacity-20" />
-              <div className="italic">{t('noHist')}</div>
+              <Anchor size={64} className="opacity-20" />
+              <div className="italic text-lg">{t('noHist')}</div>
             </div>
           ) : (
             reports.map((report) => {
@@ -89,44 +100,44 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ onClose }) => {
               const maxRange = report.result.percent + report.result.errorBand95Percent;
               
               return (
-              <div key={report.id} className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-lg p-4 shadow-sm hover:shadow-md transition-shadow">
+              <div key={report.id} className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
                 {/* Card Header: Vessel & Date */}
                 <div className="flex justify-between items-start mb-3 pb-3 border-b border-gray-100 dark:border-slate-800">
                   <div>
-                    <div className="font-bold text-nautical-900 dark:text-nautical-100 text-lg">{report.vesselName}</div>
-                    <div className="text-xs text-gray-500 dark:text-gray-400">{new Date(report.createdAt).toLocaleString()}</div>
+                    <div className="font-bold text-nautical-900 dark:text-nautical-100 text-xl">{report.vesselName}</div>
+                    <div className="text-sm text-gray-500 dark:text-gray-400">{new Date(report.createdAt).toLocaleString()}</div>
                   </div>
-                  <div className="flex gap-1">
+                  <div className="flex gap-2">
                     <button 
                       onClick={() => shareReport(report)} 
-                      className="p-2 text-gray-300 dark:text-slate-600 hover:text-green-500 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-slate-800 rounded-full transition-colors"
+                      className="p-3 text-gray-400 dark:text-slate-600 hover:text-green-500 dark:hover:text-green-400 hover:bg-green-50 dark:hover:bg-slate-800 rounded-full transition-colors"
                       title={t('sendWhatsapp')}
                     >
-                      <Share2 size={18} />
+                      <Share2 size={24} />
                     </button>
                     <button 
                       onClick={() => deleteReport(report.id)} 
-                      className="p-2 text-gray-300 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-slate-800 rounded-full transition-colors"
+                      className="p-3 text-gray-400 dark:text-slate-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-slate-800 rounded-full transition-colors"
                       title="Delete Report"
                     >
-                      <Trash2 size={18} />
+                      <Trash2 size={24} />
                     </button>
                   </div>
                 </div>
                 
                 {/* Metadata Grid */}
-                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm mb-4 text-gray-700 dark:text-gray-300">
+                <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-base mb-4 text-gray-700 dark:text-gray-300">
                   <div className="flex flex-col">
-                    <span className="text-[10px] uppercase text-gray-400 dark:text-gray-500 font-bold">{t('operator')}</span>
-                    <span className="truncate">{report.operatorName}</span>
+                    <span className="text-xs uppercase text-gray-400 dark:text-gray-500 font-bold">{t('operator')}</span>
+                    <span className="truncate font-semibold">{report.operatorName}</span>
                   </div>
                   <div className="flex flex-col">
-                    <span className="text-[10px] uppercase text-gray-400 dark:text-gray-500 font-bold">{t('loadNum')}</span>
-                    <span className="truncate">{report.loadNumber || '-'}</span>
+                    <span className="text-xs uppercase text-gray-400 dark:text-gray-500 font-bold">{t('loadNum')}</span>
+                    <span className="truncate font-semibold">{report.loadNumber || '-'}</span>
                   </div>
                   <div className="flex flex-col col-span-2">
-                    <span className="text-[10px] uppercase text-gray-400 dark:text-gray-500 font-bold">{t('dredgeArea')}</span>
-                    <span className="truncate">{report.dredgeArea || '-'}</span>
+                    <span className="text-xs uppercase text-gray-400 dark:text-gray-500 font-bold">{t('dredgeArea')}</span>
+                    <span className="truncate font-semibold">{report.dredgeArea || '-'}</span>
                   </div>
                 </div>
 
@@ -136,41 +147,38 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ onClose }) => {
                   {/* Weights Row */}
                   <div className="flex items-center justify-between p-3 border-b border-slate-200 dark:border-slate-700">
                     <div className="flex flex-col items-center w-5/12">
-                      <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">{t('base')}</span>
-                      <span className="font-mono font-bold text-slate-700 dark:text-slate-200 text-lg">
+                      <span className="text-xs text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">{t('base')}</span>
+                      <span className="font-mono font-bold text-slate-700 dark:text-slate-200 text-xl">
                         {report.result.Wbase.fixedValue.toFixed(1)}<span className="text-sm">g</span>
                       </span>
-                      <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">
+                      <span className="text-xs text-slate-400 dark:text-slate-500 font-mono">
                         ±{report.result.Wbase.errorBand95.toFixed(2)}
                       </span>
                     </div>
 
                     <div className="w-2/12 flex justify-center text-slate-300 dark:text-slate-600">
-                      {direction === 'rtl' ? <ArrowRight size={20} className="rotate-180" /> : <ArrowRight size={20} />}
+                      {direction === 'rtl' ? <ArrowRight size={24} className="rotate-180" /> : <ArrowRight size={24} />}
                     </div>
 
                     <div className="flex flex-col items-center w-5/12">
-                      <span className="text-[10px] text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">{t('final')}</span>
-                      <span className="font-mono font-bold text-slate-700 dark:text-slate-200 text-lg">
+                      <span className="text-xs text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider">{t('final')}</span>
+                      <span className="font-mono font-bold text-slate-700 dark:text-slate-200 text-xl">
                         {report.result.Wfinal.fixedValue.toFixed(1)}<span className="text-sm">g</span>
                       </span>
-                      <span className="text-[10px] text-slate-400 dark:text-slate-500 font-mono">
+                      <span className="text-xs text-slate-400 dark:text-slate-500 font-mono">
                         ±{report.result.Wfinal.errorBand95.toFixed(2)}
                       </span>
                     </div>
                   </div>
 
                   {/* Result Highlight */}
-                  <div className="p-3 text-center bg-white dark:bg-slate-900">
-                    <div className="text-[10px] text-gray-400 uppercase font-bold mb-1">{t('weightChange')}</div>
-                    <div className="text-2xl font-extrabold text-nautical-700 dark:text-nautical-300 leading-none mb-1 font-mono">
+                  <div className="p-4 text-center bg-white dark:bg-slate-900">
+                    <div className="text-xs text-gray-400 uppercase font-bold mb-1">{t('weightChange')}</div>
+                    <div className="text-3xl font-extrabold text-nautical-700 dark:text-nautical-300 leading-none mb-1 font-mono">
                       {report.result.percent.toFixed(2)}%
                     </div>
-                    <div className="text-xs font-medium text-blue-600 dark:text-blue-400 mb-2 font-mono">
+                    <div className="text-sm font-medium text-blue-600 dark:text-blue-400 mb-2 font-mono">
                        ± {report.result.errorBand95Percent.toFixed(2)}% <span className="text-gray-400 font-normal">({t('conf')})</span>
-                    </div>
-                    <div className="inline-block bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-300 text-xs px-2 py-1 rounded border border-gray-200 dark:border-slate-700">
-                       {t('range')}: <strong className="font-mono">{minRange.toFixed(2)}%</strong> – <strong className="font-mono">{maxRange.toFixed(2)}%</strong>
                     </div>
                   </div>
                 </div>
@@ -181,8 +189,8 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ onClose }) => {
         </div>
 
         {/* Footer */}
-        <div className="p-3 border-t border-gray-200 dark:border-slate-800 text-center bg-gray-50 dark:bg-slate-800 rounded-b-lg">
-           <span className="text-[10px] text-gray-400 dark:text-gray-500 uppercase tracking-widest">Local Storage Data</span>
+        <div className="p-4 border-t border-gray-200 dark:border-slate-800 text-center bg-gray-50 dark:bg-slate-800 rounded-b-xl">
+           <span className="text-xs text-gray-400 dark:text-gray-500 uppercase tracking-widest">Local Storage Data</span>
         </div>
       </div>
     </div>

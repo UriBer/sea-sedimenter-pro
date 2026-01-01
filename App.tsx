@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { TarePanel } from './components/TarePanel';
 import { SessionPanel } from './components/SessionPanel';
 import { ResultCard } from './components/ResultCard';
@@ -24,6 +24,9 @@ const App: React.FC = () => {
   // Final Computation
   const [ratioResult, setRatioResult] = useState<RatioResult | null>(null);
 
+  // Refs for scrolling
+  const resultRef = useRef<HTMLDivElement>(null);
+
   // Modals
   const [showHistory, setShowHistory] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
@@ -38,8 +41,10 @@ const App: React.FC = () => {
     if (baseResult && finalResult) {
       const res = RatioCalculator.calculate(baseResult, finalResult);
       setRatioResult(res);
-      // Scroll to bottom
-      setTimeout(() => window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' }), 100);
+      // Scroll to result card (top of results)
+      setTimeout(() => {
+        resultRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 100);
     }
   };
 
@@ -135,10 +140,10 @@ const App: React.FC = () => {
 
         {/* Final Result */}
         {ratioResult && (
-           <>
+           <div ref={resultRef} className="scroll-mt-20">
             <ResultCard result={ratioResult} onReset={handleResetAll} />
             <ReportForm result={ratioResult} onSaved={() => {/* Optional post-save action */}} />
-           </>
+           </div>
         )}
 
       </main>

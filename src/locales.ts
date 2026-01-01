@@ -52,6 +52,10 @@ export const translations = {
     usage: "How To Use",
     math: "Calculations",
     licTab: "License",
+    raw: "Gross (Raw)",
+    corrected: "Net (Corrected)",
+    biasApplied: "Tare/Bias (-)",
+    addValue: "ADD VALUE",
   },
   he: {
     appTitle: "סי-סדימנטר",
@@ -103,6 +107,10 @@ export const translations = {
     usage: "הוראות שימוש",
     math: "חישובים",
     licTab: "רישיון",
+    raw: "ברוטו (גלמי)",
+    corrected: "נטו (מתוקן)",
+    biasApplied: "טרה/הטיה (-)",
+    addValue: "הוסף ערך",
   },
   ar: {
     appTitle: "راسب البحر",
@@ -154,6 +162,10 @@ export const translations = {
     usage: "كيفية الاستخدام",
     math: "العمليات الحسابية",
     licTab: "رخصة",
+    raw: "الإجمالي (الخام)",
+    corrected: "الصافي (المصحح)",
+    biasApplied: "الوزن الفارغ (-)",
+    addValue: "أضف قيمة",
   },
   ru: {
     appTitle: "Морской Осадок",
@@ -205,5 +217,9 @@ export const translations = {
     usage: "Как использовать",
     math: "Расчеты",
     licTab: "Лицензия",
+    raw: "Брутто (Сырое)",
+    corrected: "Нетто (Факт)",
+    biasApplied: "Тара (-)",
+    addValue: "ДОБАВИТЬ",
   }
 };

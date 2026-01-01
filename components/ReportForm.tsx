@@ -19,18 +19,39 @@ export const ReportForm: React.FC<ReportFormProps> = ({ result, onSaved }) => {
     operatorName: '',
     date: defaultDateTime,
     vesselName: '',
-    loadDate: '', // Deprecated/Removed from UI
+    loadDate: '', 
     loadNumber: '',
     dredgeArea: ''
   });
   const [isSaved, setIsSaved] = useState(false);
 
   useEffect(() => {
-    // Load last operator name
+    // Load last used values for persistent fields
     const lastOp = localStorage.getItem('sea_sed_last_op');
-    if (lastOp) {
-      setFormData(prev => ({ ...prev, operatorName: lastOp }));
-    }
+    const lastVessel = localStorage.getItem('sea_sed_last_vessel');
+    const lastDredge = localStorage.getItem('sea_sed_last_dredge');
+    const lastLoad = localStorage.getItem('sea_sed_last_load_num');
+
+    setFormData(prev => {
+        let nextLoad = prev.loadNumber;
+        // Auto increment load number if it exists and is numeric
+        if (lastLoad) {
+            const num = parseInt(lastLoad);
+            if (!isNaN(num)) {
+                nextLoad = (num + 1).toString();
+            } else {
+                nextLoad = lastLoad; // Fallback if alphanumeric
+            }
+        }
+
+        return { 
+            ...prev, 
+            operatorName: lastOp || '', 
+            vesselName: lastVessel || '',
+            dredgeArea: lastDredge || '',
+            loadNumber: nextLoad
+        };
+    });
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -38,11 +59,16 @@ export const ReportForm: React.FC<ReportFormProps> = ({ result, onSaved }) => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  const persistData = () => {
+     if (formData.operatorName) localStorage.setItem('sea_sed_last_op', formData.operatorName);
+     if (formData.vesselName) localStorage.setItem('sea_sed_last_vessel', formData.vesselName);
+     if (formData.dredgeArea) localStorage.setItem('sea_sed_last_dredge', formData.dredgeArea);
+     if (formData.loadNumber) localStorage.setItem('sea_sed_last_load_num', formData.loadNumber);
+  };
+
   const handleSave = (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Persist operator name
-    localStorage.setItem('sea_sed_last_op', formData.operatorName);
+    persistData();
 
     const newReport: SavedReport = {
       id: crypto.randomUUID(),
@@ -67,15 +93,16 @@ export const ReportForm: React.FC<ReportFormProps> = ({ result, onSaved }) => {
   };
 
   const handleWhatsApp = () => {
-    // Persist operator name if sending via WA as well, for convenience
-    if (formData.operatorName) {
-        localStorage.setItem('sea_sed_last_op', formData.operatorName);
-    }
+    persistData();
 
     const isLoss = result.percent > 0;
     const typeLabel = isLoss ? t('weightLoss') : t('weightChange');
     const minRange = result.percent - result.errorBand95Percent;
     const maxRange = result.percent + result.errorBand95Percent;
+
+    // Calculate Raw Values
+    const baseRaw = result.Wbase.fixedValue + result.Wbase.bias;
+    const finalRaw = result.Wfinal.fixedValue + result.Wfinal.bias;
 
     const reportText = [
       `*${t('appTitle')} Report*`,
@@ -86,8 +113,15 @@ export const ReportForm: React.FC<ReportFormProps> = ({ result, onSaved }) => {
       `${t('loadNum')}: ${formData.loadNumber || '-'}`,
       `${t('dredgeArea')}: ${formData.dredgeArea || '-'}`,
       ``,
-      `*${t('base')}:* ${result.Wbase.fixedValue.toFixed(1)}g (±${result.Wbase.errorBand95.toFixed(2)})`,
-      `*${t('final')}:* ${result.Wfinal.fixedValue.toFixed(1)}g (±${result.Wfinal.errorBand95.toFixed(2)})`,
+      `*${t('base')} Measurement*`,
+      `Raw: ${baseRaw.toFixed(1)}g`,
+      `Bias: -${result.Wbase.bias.toFixed(1)}g`,
+      `*Norm: ${result.Wbase.fixedValue.toFixed(1)}g* (±${result.Wbase.errorBand95.toFixed(2)})`,
+      ``,
+      `*${t('final')} Measurement*`,
+      `Raw: ${finalRaw.toFixed(1)}g`,
+      `Bias: -${result.Wfinal.bias.toFixed(1)}g`,
+      `*Norm: ${result.Wfinal.fixedValue.toFixed(1)}g* (±${result.Wfinal.errorBand95.toFixed(2)})`,
       ``,
       `*${typeLabel}: ${result.percent.toFixed(2)}%*`,
       `${t('range')}: ${minRange.toFixed(2)}% — ${maxRange.toFixed(2)}%`,
@@ -101,23 +135,23 @@ export const ReportForm: React.FC<ReportFormProps> = ({ result, onSaved }) => {
 
   if (isSaved) {
       return (
-          <div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-lg p-4 mt-6 text-center text-green-800 dark:text-green-300">
-              <p className="font-bold">{t('savedSuccess')}</p>
+          <div className="bg-green-50 dark:bg-green-900/30 border border-green-200 dark:border-green-800 rounded-xl p-6 mt-8 text-center text-green-800 dark:text-green-300">
+              <p className="font-bold text-lg">{t('savedSuccess')}</p>
           </div>
       )
   }
 
-  const inputClass = "w-full border border-gray-300 dark:border-slate-600 rounded px-3 py-2 focus:ring-2 focus:ring-nautical-500 outline-none bg-white dark:bg-slate-800 text-gray-900 dark:text-gray-100 transition-colors";
-  const labelClass = "block text-xs font-bold text-gray-500 dark:text-gray-400 uppercase mb-1";
+  const inputClass = "w-full border-2 border-gray-300 dark:border-slate-600 rounded-lg px-4 py-3 text-lg focus:ring-2 focus:ring-nautical-500 outline-none bg-white dark:bg-slate-800 text-gray-900 dark:text-gray-100 transition-colors placeholder:text-gray-300";
+  const labelClass = "block text-sm font-bold text-gray-600 dark:text-gray-300 uppercase mb-2";
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-lg shadow-md p-6 mt-6 border border-gray-200 dark:border-slate-800 transition-colors">
-      <div className="flex items-center gap-2 mb-4 pb-2 border-b border-gray-100 dark:border-slate-800">
-        <FileText size={20} className="text-nautical-700 dark:text-nautical-400"/>
-        <h3 className="font-bold text-gray-800 dark:text-gray-100 text-lg">{t('saveRecord')}</h3>
+    <div className="bg-white dark:bg-slate-900 rounded-xl shadow-md p-6 mt-8 border border-gray-200 dark:border-slate-800 transition-colors">
+      <div className="flex items-center gap-2 mb-6 pb-2 border-b border-gray-100 dark:border-slate-800">
+        <FileText size={24} className="text-nautical-700 dark:text-nautical-400"/>
+        <h3 className="font-bold text-gray-800 dark:text-gray-100 text-xl">{t('saveRecord')}</h3>
       </div>
       
-      <form onSubmit={handleSave} className="space-y-4">
+      <form onSubmit={handleSave} className="space-y-5">
         <div>
           <label className={labelClass}>{t('operator')}</label>
           <input 
@@ -130,18 +164,6 @@ export const ReportForm: React.FC<ReportFormProps> = ({ result, onSaved }) => {
           />
         </div>
         
-        <div>
-           <label className={labelClass}>{t('date')}</label>
-            <input 
-                type="datetime-local" 
-                required 
-                name="date" 
-                value={formData.date} 
-                onChange={handleChange} 
-                className={inputClass} 
-            />
-        </div>
-
         <div>
             <label className={labelClass}>{t('vessel')}</label>
             <input 
@@ -162,6 +184,8 @@ export const ReportForm: React.FC<ReportFormProps> = ({ result, onSaved }) => {
                 value={formData.loadNumber} 
                 onChange={handleChange} 
                 placeholder="#"
+                type="number"
+                inputMode="numeric"
                 className={inputClass} 
             />
           </div>
@@ -177,19 +201,31 @@ export const ReportForm: React.FC<ReportFormProps> = ({ result, onSaved }) => {
           </div>
         </div>
 
-        <div className="flex gap-2 mt-6">
+        <div>
+           <label className={labelClass}>{t('date')}</label>
+            <input 
+                type="datetime-local" 
+                required 
+                name="date" 
+                value={formData.date} 
+                onChange={handleChange} 
+                className={inputClass} 
+            />
+        </div>
+
+        <div className="flex flex-col gap-3 mt-8">
             <button 
                 type="button" 
                 onClick={handleWhatsApp}
-                className="flex-1 bg-green-600 text-white py-3 rounded-lg font-bold hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+                className="w-full bg-green-600 text-white py-4 rounded-lg font-bold text-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2 shadow"
             >
-              <Share2 size={18} /> WhatsApp
+              <Share2 size={24} /> {t('sendWhatsapp')}
             </button>
             <button 
                 type="submit" 
-                className="flex-1 bg-nautical-700 dark:bg-nautical-600 text-white py-3 rounded-lg font-bold hover:bg-nautical-900 dark:hover:bg-nautical-500 transition-colors flex items-center justify-center gap-2"
+                className="w-full bg-nautical-700 dark:bg-nautical-600 text-white py-4 rounded-lg font-bold text-lg hover:bg-nautical-900 dark:hover:bg-nautical-500 transition-colors flex items-center justify-center gap-2 shadow"
             >
-              <Save size={18} /> {t('saveBtn')}
+              <Save size={24} /> {t('saveBtn')}
             </button>
         </div>
       </form>
