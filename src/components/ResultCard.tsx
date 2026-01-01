@@ -1,5 +1,5 @@
 import React from 'react';
-import { RatioResult } from '../types';
+import { RatioResult, SessionResult } from '../types';
 import { ClipboardCheck, AlertTriangle } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContext';
 
@@ -22,6 +22,25 @@ export const ResultCard: React.FC<ResultCardProps> = ({ result, onReset }) => {
   // Use pre-calculated gross percentage
   const grossPercent = result.grossPercent;
   
+  // Calculate average IMU adjustment delta
+  // Delta = RawReading - Bias - AdjustedValue
+  // If no IMU used, RawReading - Bias = AdjustedValue, so Delta = 0.
+  const calculateImuAdjMean = (res: SessionResult) => {
+      if (res.measurements.length === 0) return 0;
+      const totalDelta = res.measurements.reduce((sum, m) => {
+          // adj = raw - (bias + k*az)
+          // bias + k*az = raw - adj
+          // k*az (dynamic part) = raw - adj - bias
+          // We want to show the dynamic correction magnitude
+          return sum + (m.rawReading - m.adjustedValue - res.bias);
+      }, 0);
+      return totalDelta / res.measurements.length;
+  };
+
+  const baseImuAdj = calculateImuAdjMean(result.Wbase);
+  const finalImuAdj = calculateImuAdjMean(result.Wfinal);
+  const hasSignificantImu = Math.abs(baseImuAdj) > 0.01 || Math.abs(finalImuAdj) > 0.01;
+
   return (
     <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-blue-100 dark:border-slate-700 overflow-hidden mb-10 animate-fade-in transition-colors">
       <div className="bg-nautical-900 dark:bg-nautical-800 text-white p-5 flex items-center gap-3">
@@ -87,6 +106,20 @@ export const ResultCard: React.FC<ResultCardProps> = ({ result, onReset }) => {
                 <div className="text-center font-mono text-lg text-red-400">-{result.Wfinal.bias.toFixed(1)}g</div>
                 <div className="text-center font-mono text-gray-300">-</div>
             </div>
+
+            {/* IMU Adjustment Row (Only show if significant) */}
+            {hasSignificantImu && (
+                <div className="grid grid-cols-4 gap-3 items-center mb-3 min-w-[320px]">
+                    <div className="text-sm font-bold text-purple-500 dark:text-purple-400">{t('imuCorrection')}</div>
+                    <div className="text-center font-mono text-lg text-purple-600 dark:text-purple-300">
+                        {baseImuAdj > 0 ? '-' : '+'}{Math.abs(baseImuAdj).toFixed(2)}g
+                    </div>
+                    <div className="text-center font-mono text-lg text-purple-600 dark:text-purple-300">
+                        {finalImuAdj > 0 ? '-' : '+'}{Math.abs(finalImuAdj).toFixed(2)}g
+                    </div>
+                    <div className="text-center font-mono text-gray-300">-</div>
+                </div>
+            )}
 
             {/* Normalized Row */}
             <div className="grid grid-cols-4 gap-3 items-center pt-3 border-t border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded p-3 min-w-[320px]">

@@ -1,6 +1,9 @@
 // --- SENSOR TYPES ---
 export interface IMUSnapshot {
-  az: number;       // Vertical acceleration (m/s^2)
+  ax: number;       // Raw X acceleration (m/s^2 or g)
+  ay: number;       // Raw Y acceleration
+  azRaw: number;    // Raw Z acceleration
+  az: number;       // Projected Vertical acceleration (m/s^2)
   azRms: number;    // RMS of az over window
   roll?: number;    // Optional
   pitch?: number;   // Optional

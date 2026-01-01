@@ -65,6 +65,7 @@ export const translations = {
     imuActive: "IMU Adjustment Active",
     imuDisabled: "IMU Off",
     imuToggle: "IMU Assist",
+    imuCorrection: "IMU Adj.",
     
     // Help
     helpTareTitle: "1. Tare Configuration",
@@ -75,12 +76,16 @@ export const translations = {
     helpFinalBody: "After processing (e.g., drying or sieving), measure the remaining sample multiple times.",
     helpResultsTitle: "4. Results",
     helpResultsBody: "The app calculates the percentage change (loss or gain) with a 95% confidence interval, accounting for both tare uncertainty and measurement repeatability.",
+    helpSensorsTitle: "Sensors & IMU Assist",
+    helpSensorsBody: "The app can use your device's accelerometer to detect motion. 'IMU Assist' uses linear regression to correlate vertical acceleration with scale reading fluctuations, applying a dynamic correction to minimize wave error.",
     mathSysTitle: "Systematic Uncertainty (Bias)",
     mathSysBody: "We use the median of tare samples as the bias. The uncertainty (T) is half the range of tare readings.",
     mathRandTitle: "Random Uncertainty (Precision)",
     mathRandBody: "We calculate the Standard Error (SE) from the repeated measurements of the sample, trimming outliers (10%).",
     mathTotalTitle: "Total Combined Uncertainty",
     mathTotalBody: "We combine Systematic and Random errors: σ_total = √(SE² + T²). The final band is ±k*σ (approx 95% confidence).",
+    mathImuTitle: "IMU Regression (Motion Correction)",
+    mathImuBody: "When active, we fit a model W_adj = W_raw - (b + k · az). The slope 'k' is determined during Tare calibration to minimize the variance of the residuals against vertical acceleration 'az'.",
     reportHeader: "Report",
     grossVal: "Gross",
     netVal: "Net",
@@ -148,6 +153,7 @@ export const translations = {
     imuActive: "תיקון תנועה פעיל",
     imuDisabled: "ללא תיקון",
     imuToggle: "IMU עזר",
+    imuCorrection: "תיקון IMU",
     helpTareTitle: "1. הגדרת טרה (Tare)",
     helpTareBody: "מדוד מיכל ריק 5-10 פעמים. האפליקציה מחשבת את ההטיה החציונית ואת טווח אי-הודאות כדי לסנן רעשי משקל.",
     helpBaseTitle: "2. מדידת בסיס",
@@ -156,18 +162,21 @@ export const translations = {
     helpFinalBody: "לאחר עיבוד (ייבוש/ניפוי), מדוד את הדגימה הנותרת מספר פעמים.",
     helpResultsTitle: "4. תוצאות",
     helpResultsBody: "האפליקציה מחשבת את אחוז השינוי (אובדן או רווח) עם רווח בר-סמך של 95%, תוך התחשבות באי-ודאות הטרה ובחזרתיות המדידה.",
+    helpSensorsTitle: "חיישנים וסיוע IMU",
+    helpSensorsBody: "האפליקציה משתמשת במד התאוצה של המכשיר לזיהוי תנועה. 'סיוע IMU' משתמש ברגרסיה לינארית כדי להתאים בין התאוצה האנכית לתנודות המשקל, ומחיל תיקון דינמי למזעור שגיאות גלים.",
     mathSysTitle: "אי-ודאות שיטתית (הטיה)",
     mathSysBody: "אנו משתמשים בחציון דגימות הטרה כהטיה. אי-הודאות (T) היא מחצית מטווח קריאות הטרה.",
     mathRandTitle: "אי-ודאות אקראית (דיוק)",
     mathRandBody: "אנו מחשבים את שגיאת התקן (SE) מהמדידות החוזרות של הדגימה, תוך ניפוי חריגים (10%).",
     mathTotalTitle: "אי-ודאות משולבת כוללת",
     mathTotalBody: "אנו משלבים שגיאות שיטתיות ואקראיות: σ_total = √(SE² + T²). הטווח הסופי הוא ±k*σ (כ-95% ביטחון).",
+    mathImuTitle: "רגרסיית IMU (תיקון תנועה)",
+    mathImuBody: "כאשר פעיל, אנו מתאימים מודל W_adj = W_raw - (b + k · az). השיפוע 'k' נקבע במהלך כיול הטרה כדי למזער את השונות של השאריות כנגד התאוצה האנכית 'az'.",
     reportHeader: "דוח",
     grossVal: "ברוטו",
     netVal: "נטו",
     tareVal: "טרה"
   },
-  // Fallback other languages to English for new keys for brevity in MVP
   ar: {
     appTitle: "راسب البحر",
     // ... previous translations ...
@@ -177,6 +186,7 @@ export const translations = {
     imuActive: "تصحيح IMU نشط",
     imuDisabled: "IMU معطل",
     imuToggle: "مساعد IMU",
+    imuCorrection: "تعديل IMU",
     // ... Copying basic structure for MVP stability ...
     appSubtitle: "تحليل عينات دقيق",
     history: "السجل",
@@ -227,7 +237,11 @@ export const translations = {
     reportHeader: "تقرير",
     grossVal: "إجمالي",
     netVal: "صافي",
-    tareVal: "فارغ"
+    tareVal: "فارغ",
+    helpSensorsTitle: "أجهزة الاستشعار و IMU",
+    helpSensorsBody: "يستخدم التطبيق مقياس التسارع للكشف عن الحركة. يستخدم 'IMU Assist' الانحدار الخطي لتصحيح القراءات بناءً على التسارع العمودي.",
+    mathImuTitle: "انحدار IMU",
+    mathImuBody: "يتم استخدام نموذج لتقليل التباين بناءً على التسارع العمودي أثناء المعايرة."
   },
   ru: {
     // ... previous translations ...
@@ -237,6 +251,7 @@ export const translations = {
     imuActive: "IMU Коррекция",
     imuDisabled: "IMU Выкл",
     imuToggle: "IMU Помощь",
+    imuCorrection: "IMU Корр.",
     appTitle: "Морской Осадок",
     appSubtitle: "Анализ мелких проб",
     history: "История",
@@ -287,6 +302,10 @@ export const translations = {
     reportHeader: "Отчет",
     grossVal: "Брутто",
     netVal: "Нетто",
-    tareVal: "Тара"
+    tareVal: "Тара",
+    helpSensorsTitle: "Датчики и IMU",
+    helpSensorsBody: "Приложение использует акселерометр для обнаружения движения. 'IMU Assist' использует линейную регрессию для динамической коррекции веса на основе вертикального ускорения.",
+    mathImuTitle: "IMU Регрессия",
+    mathImuBody: "Используется модель W_adj = W_raw - (b + k · az). Коэффициент 'k' определяется при тарировании для минимизации дисперсии."
   }
 };

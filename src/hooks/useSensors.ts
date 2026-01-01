@@ -9,7 +9,10 @@ interface SensorState {
   samplingRate: number; // Hz
   
   // Live values
-  az: number;
+  ax: number;
+  ay: number;
+  azRaw: number;
+  az: number; // projected vertical (estimated)
   azRms: number;
 }
 
@@ -22,6 +25,9 @@ export function useSensors() {
     isGranted: false,
     isActive: false,
     samplingRate: 0,
+    ax: 0, 
+    ay: 0, 
+    azRaw: 0,
     az: 0,
     azRms: 0,
   });
@@ -29,6 +35,7 @@ export function useSensors() {
   const gravityRef = useRef<{x:number, y:number, z:number}>({x:0, y:0, z:0});
   const bufferRef = useRef<{val: number, ts: number}[]>([]);
   const lastTsRef = useRef<number>(0);
+  const rawCacheRef = useRef<{x:number, y:number, z:number}>({x:0, y:0, z:0});
 
   const handleMotion = useCallback((event: DeviceMotionEvent) => {
     const { accelerationIncludingGravity, interval } = event;
@@ -37,6 +44,9 @@ export function useSensors() {
     const ax = accelerationIncludingGravity.x || 0;
     const ay = accelerationIncludingGravity.y || 0;
     const az = accelerationIncludingGravity.z || 0;
+    
+    // Cache raw values for snapshot
+    rawCacheRef.current = { x: ax, y: ay, z: az };
 
     // 1. Estimate Gravity (Low Pass)
     const g = gravityRef.current;
@@ -84,12 +94,15 @@ export function useSensors() {
       setState(prev => ({
         ...prev,
         isActive: true,
+        ax,
+        ay,
+        azRaw: az,
         az: vertAccel,
         azRms: rms,
         samplingRate: Math.round(rate)
       }));
     }
-  }, []);
+  }, [state.samplingRate]); // Added dep, though likely static 0 initially, updated via setState
 
   const requestPermissions = async () => {
     if (typeof (DeviceMotionEvent as any).requestPermission === 'function') {
@@ -122,10 +135,9 @@ export function useSensors() {
 
   const stopSensors = () => {
     window.removeEventListener('devicemotion', handleMotion);
-    setState(s => ({ ...s, isActive: false, az: 0, azRms: 0 }));
+    setState(s => ({ ...s, isActive: false, ax: 0, ay: 0, azRaw: 0, az: 0, azRms: 0 }));
   };
 
-  // Auto-start if granted (optional, but better to be explicit)
   // Clean up
   useEffect(() => {
     return () => {
@@ -142,6 +154,9 @@ export function useSensors() {
     const meanAz = bufferRef.current.length > 0 ? sum / bufferRef.current.length : 0;
 
     return {
+      ax: rawCacheRef.current.x,
+      ay: rawCacheRef.current.y,
+      azRaw: rawCacheRef.current.z,
       az: meanAz,
       azRms: state.azRms,
       timestamp: Date.now()

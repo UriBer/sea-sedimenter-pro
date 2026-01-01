@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, BookOpen, Calculator, Scale, FileText } from 'lucide-react';
+import { X, BookOpen, Calculator, Scale, FileText, Activity } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContext';
 
 interface HelpModalProps {
@@ -48,6 +48,11 @@ export const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
               </h3>
               
               <div>
+                <strong className="text-nautical-700 dark:text-nautical-400 block mb-1">{t('helpSensorsTitle')}</strong>
+                <p className="text-sm text-gray-600 dark:text-gray-400">{t('helpSensorsBody')}</p>
+              </div>
+
+              <div>
                 <strong className="text-nautical-700 dark:text-nautical-400 block mb-1">{t('helpTareTitle')}</strong>
                 <p className="text-sm text-gray-600 dark:text-gray-400">{t('helpTareBody')}</p>
               </div>
@@ -86,6 +91,12 @@ export const HelpModal: React.FC<HelpModalProps> = ({ onClose }) => {
                 <h4 className="font-bold text-gray-800 dark:text-gray-100 mb-2">{t('mathRandTitle')}</h4>
                 <p className="mb-3 text-sm">{t('mathRandBody')}</p>
                 <code className="block bg-white dark:bg-slate-900 p-2 rounded border dark:border-slate-700 text-xs font-mono">SE = StdDev / sqrt(n_trim)</code>
+              </div>
+
+              <div className="p-4 bg-gray-50 dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700">
+                <h4 className="font-bold text-gray-800 dark:text-gray-100 mb-2 flex items-center gap-2"><Activity size={16}/> {t('mathImuTitle')}</h4>
+                <p className="mb-3 text-sm">{t('mathImuBody')}</p>
+                <code className="block bg-white dark:bg-slate-900 p-2 rounded border dark:border-slate-700 text-xs mb-1 font-mono">W_adj = W_raw - (b + k · az)</code>
               </div>
 
               <div className="p-4 bg-gray-50 dark:bg-slate-800 rounded-lg border border-gray-200 dark:border-slate-700">

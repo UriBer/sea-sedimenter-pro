@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import { MeasurementSession } from '../session/MeasurementSession';
 import { SessionResult, TareModel, IMUSnapshot, Measurement } from '../types';
-import { Trash2, Plus, Play, Square, CheckCircle } from 'lucide-react';
+import { Trash2, Plus, Play, Square, CheckCircle, Smartphone } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContext';
 
 interface SessionPanelProps {
@@ -27,10 +27,8 @@ export const SessionPanel: React.FC<SessionPanelProps> = ({
 }) => {
   const { t } = useSettings();
   
-  // We use the new MeasurementSession class
   const [session] = useState(() => new MeasurementSession());
   const [isRecording, setIsRecording] = useState(false);
-  // Local state copy for rendering list
   const [measurements, setMeasurements] = useState<Measurement[]>([]);
   const [inputValue, setInputValue] = useState<string>('');
   
@@ -42,42 +40,6 @@ export const SessionPanel: React.FC<SessionPanelProps> = ({
     setIsRecording(true);
   };
 
-  const addMeasurement = (e?: React.FormEvent) => {
-    e?.preventDefault();
-    if (!tareModel) return;
-    const val = parseFloat(inputValue);
-    if (!isNaN(val) && val > 0) {
-      const snap = sensorSnapshot();
-      session.addMeasurement(val, tareModel, snap);
-      // Hack to get internal array since method returns it
-      // but MeasurementSession.addMeasurement returns the array.
-      // Wait, in previous step I made addMeasurement return array. 
-      // Checking my memory of the generated logic... yes.
-      // But let's check the file content of MeasurementSession provided in previous prompt.
-      // Yes: `return [...this.measurements];`
-      // But we need to be careful if I didn't expose getMeasurements.
-      // I'll assume addMeasurement returns the list.
-      // Actually, to be safe, I'll assume I can just use the return value.
-      // If not, I'd need to add getMeasurements to the class. 
-      // Let's assume standard behavior.
-      
-      // Since I can't easily see the hidden class impl right now, 
-      // I will rely on the return value of addMeasurement.
-      // But wait, in the previous prompt I generated MeasurementSession.ts 
-      // and it DID return the array.
-      
-      // Let's create a helper to get list if needed, but for now relies on addMeasurement returning it.
-      // Oh wait, `session` is an instance. `session.addMeasurement(...)` returns the array.
-      // Re-reading `src/session/MeasurementSession.ts`:
-      // `addMeasurement(...) { ... return [...this.measurements]; }` -> Yes.
-    }
-  };
-  
-  // Actually, I need a way to get measurements without adding.
-  // The class in previous prompt didn't have `getMeasurements()`.
-  // I will add `measurements` field or getter access.
-  // OR just store them in local state which is updated by add/remove returns.
-  
   const handleAdd = (e: React.FormEvent) => {
       e.preventDefault();
       if (!tareModel) return;
@@ -99,15 +61,11 @@ export const SessionPanel: React.FC<SessionPanelProps> = ({
   const stopSession = () => {
     if (!tareModel) return;
     const res = session.calculateResult(tareModel);
-    // Add 'kind' and 'bias' for UI display to the result
-    // The calculateResult returns fixedValue etc.
-    // I need to shape it into SessionResult expected by UI.
     const uiResult: SessionResult = {
         ...res,
         kind,
-        bias: tareModel.bias // Nominal bias
+        bias: tareModel.bias
     };
-    
     setIsRecording(false);
     onComplete(uiResult);
   };
@@ -175,14 +133,28 @@ export const SessionPanel: React.FC<SessionPanelProps> = ({
               
               <div className="max-h-56 overflow-y-auto mb-4 space-y-2">
                  {measurements.slice().reverse().map((m) => (
-                    <div key={m.id} className="flex justify-between items-center text-base bg-gray-50 dark:bg-slate-800 p-3 rounded-lg border border-transparent dark:border-slate-700">
-                       <span className="font-mono text-gray-800 dark:text-gray-200 font-bold text-lg">
-                           {m.rawReading.toFixed(1)} <span className="text-gray-400 text-sm font-normal">→ {m.adjustedValue.toFixed(1)}</span>
-                       </span>
-                       {m.snapshot && tareModel?.method === 'imu-regression' && (
-                           <span className="text-xs text-purple-400 font-mono ml-2">IMU</span>
+                    <div key={m.id} className="flex flex-col text-base bg-gray-50 dark:bg-slate-800 p-3 rounded-lg border border-transparent dark:border-slate-700">
+                       <div className="flex justify-between items-center">
+                          <span className="font-mono text-gray-800 dark:text-gray-200 font-bold text-lg">
+                              {m.rawReading.toFixed(1)} <span className="text-gray-400 text-sm font-normal">→ {m.adjustedValue.toFixed(1)}</span>
+                          </span>
+                          <button onClick={() => handleRemove(m.id)} className="text-red-400 p-2 hover:bg-red-50 rounded ml-auto"><Trash2 size={20}/></button>
+                       </div>
+                       
+                       {/* Show Sensor Data if available */}
+                       {m.snapshot && (
+                         <div className="mt-1 flex items-center gap-2 text-[10px] text-gray-400 font-mono bg-white dark:bg-slate-900 px-2 py-1 rounded border border-gray-100 dark:border-slate-800 w-fit">
+                            <Smartphone size={10} className="text-purple-400" />
+                            <span>X:{m.snapshot.ax.toFixed(2)}</span>
+                            <span>Y:{m.snapshot.ay.toFixed(2)}</span>
+                            <span>Z:{m.snapshot.azRaw.toFixed(2)}</span>
+                            {tareModel?.method === 'imu-regression' && (
+                                <span className="text-purple-500 font-bold ml-1">
+                                    (Adj: {(m.rawReading - m.adjustedValue).toFixed(2)})
+                                </span>
+                            )}
+                         </div>
                        )}
-                       <button onClick={() => handleRemove(m.id)} className="text-red-400 p-2 hover:bg-red-50 rounded ml-auto"><Trash2 size={20}/></button>
                     </div>
                  ))}
                  {measurements.length === 0 && <div className="text-gray-400 text-sm italic text-center py-4">{t('noReadings')}</div>}

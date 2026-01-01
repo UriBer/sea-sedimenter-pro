@@ -5,16 +5,17 @@ import { Trash2, Calculator, CheckCircle2 } from 'lucide-react';
 
 interface Props {
   title: string;
+  kind: 'base' | 'final';
   session: MeasurementSession;
   tareModel: TareModel | null;
   sensorSnapshot: () => any;
   onResult: (res: SessionResult | null) => void;
 }
 
-export const SessionPanel: React.FC<Props> = ({ title, session, tareModel, sensorSnapshot, onResult }) => {
+export const SessionPanel: React.FC<Props> = ({ title, kind, session, tareModel, sensorSnapshot, onResult }) => {
   const [input, setInput] = useState('');
   // We keep a local copy of measurements to force re-render
-  const [measurements, setMeasurements] = useState(session['measurements']); 
+  const [measurements, setMeasurements] = useState(session.getMeasurements()); 
   const [result, setResult] = useState<SessionResult | null>(null);
 
   const handleAdd = (e: React.FormEvent) => {
@@ -41,8 +42,9 @@ export const SessionPanel: React.FC<Props> = ({ title, session, tareModel, senso
   const handleCompute = () => {
     if (!tareModel) return;
     const res = session.calculateResult(tareModel);
-    setResult(res);
-    onResult(res);
+    const fullRes: SessionResult = { ...res, kind };
+    setResult(fullRes);
+    onResult(fullRes);
   };
 
   if (!tareModel) return <div className="opacity-50 p-4 border rounded mb-4">{title} (Lock Tare First)</div>;

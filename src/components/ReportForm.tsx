@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { RatioResult, ReportMetadata, SavedReport } from '../types';
+import { RatioResult, ReportMetadata, SavedReport, SessionResult } from '../types';
 import { Save, FileText, Share2 } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContext';
 
@@ -92,6 +92,18 @@ export const ReportForm: React.FC<ReportFormProps> = ({ result, onSaved }) => {
     }
   };
 
+  const formatMeasurements = (res: SessionResult, title: string) => {
+    const lines = [`*${title} Measurements:*`];
+    res.measurements.forEach((m, idx) => {
+       let line = `${idx+1}) ${m.adjustedValue.toFixed(1)}g (Raw: ${m.rawReading})`;
+       if (m.snapshot) {
+         line += ` [G: x=${m.snapshot.ax.toFixed(2)}, y=${m.snapshot.ay.toFixed(2)}, z=${m.snapshot.azRaw.toFixed(2)}]`;
+       }
+       lines.push(line);
+    });
+    return lines.join('\n');
+  };
+
   const handleWhatsApp = () => {
     persistData();
 
@@ -130,6 +142,11 @@ export const ReportForm: React.FC<ReportFormProps> = ({ result, onSaved }) => {
       `${t('grossVal')} ${t('change')}: ${grossPercent.toFixed(2)}%`,
       `${t('range')}: ${minRange.toFixed(2)}% — ${maxRange.toFixed(2)}%`,
       `_(±${result.errorBand95Percent.toFixed(2)}% ${t('conf')})_`,
+      ``,
+      `--- Detailed Data ---`,
+      formatMeasurements(result.Wbase, t('base')),
+      ``,
+      formatMeasurements(result.Wfinal, t('final')),
       ``,
       `_${t('disclaimer')}_`
     ].join('\n');

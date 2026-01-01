@@ -5,6 +5,10 @@ import { getKFactorFromN } from '../utils/kFactor';
 export class MeasurementSession {
   private measurements: Measurement[] = [];
   
+  getMeasurements(): Measurement[] {
+    return [...this.measurements];
+  }
+
   addMeasurement(val: number, tareModel: TareModel, snapshot?: IMUSnapshot): Measurement[] {
     let biasUsed = tareModel.bias;
     let adjusted = val - biasUsed;
