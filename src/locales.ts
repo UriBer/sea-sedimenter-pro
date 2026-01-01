@@ -52,10 +52,12 @@ export const translations = {
     usage: "How To Use",
     math: "Calculations",
     licTab: "License",
-    raw: "Gross (Raw)",
-    corrected: "Net (Corrected)",
-    biasApplied: "Tare/Bias (-)",
+    raw: "Gross",
+    corrected: "Net",
+    biasApplied: "Tare",
     addValue: "ADD VALUE",
+    change: "Change",
+    calcType: "Calc Type"
   },
   he: {
     appTitle: "סי-סדימנטר",
@@ -107,10 +109,12 @@ export const translations = {
     usage: "הוראות שימוש",
     math: "חישובים",
     licTab: "רישיון",
-    raw: "ברוטו (גלמי)",
-    corrected: "נטו (מתוקן)",
-    biasApplied: "טרה/הטיה (-)",
+    raw: "ברוטו",
+    corrected: "נטו",
+    biasApplied: "טרה",
     addValue: "הוסף ערך",
+    change: "שינוי",
+    calcType: "סוג חישוב"
   },
   ar: {
     appTitle: "راسب البحر",
@@ -162,10 +166,12 @@ export const translations = {
     usage: "كيفية الاستخدام",
     math: "العمليات الحسابية",
     licTab: "رخصة",
-    raw: "الإجمالي (الخام)",
-    corrected: "الصافي (المصحح)",
-    biasApplied: "الوزن الفارغ (-)",
+    raw: "إجمالي",
+    corrected: "صافي",
+    biasApplied: "فارغ",
     addValue: "أضف قيمة",
+    change: "تغيير",
+    calcType: "نوع"
   },
   ru: {
     appTitle: "Морской Осадок",
@@ -217,9 +223,11 @@ export const translations = {
     usage: "Как использовать",
     math: "Расчеты",
     licTab: "Лицензия",
-    raw: "Брутто (Сырое)",
-    corrected: "Нетто (Факт)",
-    biasApplied: "Тара (-)",
+    raw: "Брутто",
+    corrected: "Нетто",
+    biasApplied: "Тара",
     addValue: "ДОБАВИТЬ",
+    change: "Изм.",
+    calcType: "Тип"
   }
 };

@@ -19,6 +19,9 @@ export const ResultCard: React.FC<ResultCardProps> = ({ result, onReset }) => {
   const baseRaw = result.Wbase.fixedValue + result.Wbase.bias;
   const finalRaw = result.Wfinal.fixedValue + result.Wfinal.bias;
   
+  // Compute Gross Percentage
+  const grossPercent = baseRaw > 0 ? (100 * (baseRaw - finalRaw) / baseRaw) : 0;
+  
   return (
     <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-blue-100 dark:border-slate-700 overflow-hidden mb-10 animate-fade-in transition-colors">
       <div className="bg-nautical-900 dark:bg-nautical-800 text-white p-5 flex items-center gap-3">
@@ -28,8 +31,24 @@ export const ResultCard: React.FC<ResultCardProps> = ({ result, onReset }) => {
 
       <div className="p-6 text-center">
         
-        <div className="text-6xl font-extrabold text-nautical-900 dark:text-nautical-100 mb-2 ltr:font-mono tracking-tighter">
-          {result.percent.toFixed(2)}<span className="text-4xl text-gray-400 dark:text-gray-500 align-baseline">%</span>
+        {/* Gross Change Display (Secondary) */}
+        <div className="mb-6 flex flex-col items-center justify-center opacity-80">
+           <span className="text-xs font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-1">
+             {t('raw')} {t('change')}
+           </span>
+           <span className="text-4xl font-bold text-gray-700 dark:text-gray-200 font-mono">
+             {grossPercent.toFixed(2)}<span className="text-2xl text-gray-400">%</span>
+           </span>
+        </div>
+
+        {/* Net Change Display (Primary) */}
+        <div className="mb-2">
+            <span className="text-sm font-bold text-nautical-600 dark:text-nautical-400 uppercase tracking-widest mb-1 block">
+                {t('corrected')} {t('change')}
+            </span>
+            <div className="text-6xl font-extrabold text-nautical-900 dark:text-nautical-100 mb-2 ltr:font-mono tracking-tighter leading-none">
+              {result.percent.toFixed(2)}<span className="text-4xl text-gray-400 dark:text-gray-500 align-baseline">%</span>
+            </div>
         </div>
 
         <div className="flex flex-col items-center gap-3 mb-8">
@@ -42,35 +61,39 @@ export const ResultCard: React.FC<ResultCardProps> = ({ result, onReset }) => {
             </div>
         </div>
 
-        {/* Comparison Table */}
-        <div className="bg-gray-50 dark:bg-slate-800/50 rounded-lg p-4 mb-4 text-left border border-gray-100 dark:border-slate-800">
+        {/* Detailed Comparison Table */}
+        <div className="bg-gray-50 dark:bg-slate-800/50 rounded-lg p-2 sm:p-4 mb-4 text-left border border-gray-100 dark:border-slate-800 overflow-x-auto">
             <h3 className="text-xs font-bold text-gray-400 dark:text-gray-500 uppercase mb-3 tracking-widest text-center">{t('math')}</h3>
             
-            <div className="grid grid-cols-3 gap-2 text-sm pb-2 border-b border-gray-200 dark:border-slate-700 mb-2">
-                <div className="font-bold text-gray-400 dark:text-gray-500">{t('value')}</div>
+            <div className="grid grid-cols-4 gap-2 text-sm pb-2 border-b border-gray-200 dark:border-slate-700 mb-2 min-w-[280px]">
+                <div className="font-bold text-gray-400 dark:text-gray-500">{t('calcType')}</div>
                 <div className="font-bold text-center text-gray-600 dark:text-gray-300">{t('base')}</div>
                 <div className="font-bold text-center text-gray-600 dark:text-gray-300">{t('final')}</div>
+                <div className="font-bold text-center text-gray-600 dark:text-gray-300">{t('change')}</div>
             </div>
 
             {/* Raw Row */}
-            <div className="grid grid-cols-3 gap-2 items-center mb-2">
+            <div className="grid grid-cols-4 gap-2 items-center mb-2 min-w-[280px]">
                 <div className="text-xs font-bold text-gray-500 dark:text-gray-400">{t('raw')}</div>
                 <div className="text-center font-mono text-gray-800 dark:text-gray-200">{baseRaw.toFixed(1)}g</div>
                 <div className="text-center font-mono text-gray-800 dark:text-gray-200">{finalRaw.toFixed(1)}g</div>
+                <div className="text-center font-mono text-gray-500 dark:text-gray-400">{grossPercent.toFixed(2)}%</div>
             </div>
 
              {/* Bias Row */}
-             <div className="grid grid-cols-3 gap-2 items-center mb-2">
+             <div className="grid grid-cols-4 gap-2 items-center mb-2 min-w-[280px]">
                 <div className="text-xs font-bold text-gray-500 dark:text-gray-400">{t('biasApplied')}</div>
                 <div className="text-center font-mono text-red-400">-{result.Wbase.bias.toFixed(1)}g</div>
                 <div className="text-center font-mono text-red-400">-{result.Wfinal.bias.toFixed(1)}g</div>
+                <div className="text-center font-mono text-gray-300">-</div>
             </div>
 
             {/* Normalized Row */}
-            <div className="grid grid-cols-3 gap-2 items-center pt-2 border-t border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded p-2">
+            <div className="grid grid-cols-4 gap-2 items-center pt-2 border-t border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded p-2 min-w-[280px]">
                 <div className="text-xs font-extrabold text-nautical-700 dark:text-nautical-400">{t('corrected')}</div>
                 <div className="text-center font-mono font-bold text-lg text-nautical-900 dark:text-white">{result.Wbase.fixedValue.toFixed(1)}g</div>
                 <div className="text-center font-mono font-bold text-lg text-nautical-900 dark:text-white">{result.Wfinal.fixedValue.toFixed(1)}g</div>
+                <div className="text-center font-mono font-bold text-lg text-nautical-700 dark:text-nautical-300">{result.percent.toFixed(2)}%</div>
             </div>
         </div>
         

@@ -103,6 +103,7 @@ export const ReportForm: React.FC<ReportFormProps> = ({ result, onSaved }) => {
     // Calculate Raw Values
     const baseRaw = result.Wbase.fixedValue + result.Wbase.bias;
     const finalRaw = result.Wfinal.fixedValue + result.Wfinal.bias;
+    const grossPercent = baseRaw > 0 ? (100 * (baseRaw - finalRaw) / baseRaw) : 0;
 
     const reportText = [
       `*${t('appTitle')} Report*`,
@@ -114,16 +115,17 @@ export const ReportForm: React.FC<ReportFormProps> = ({ result, onSaved }) => {
       `${t('dredgeArea')}: ${formData.dredgeArea || '-'}`,
       ``,
       `*${t('base')} Measurement*`,
-      `Raw: ${baseRaw.toFixed(1)}g`,
-      `Bias: -${result.Wbase.bias.toFixed(1)}g`,
-      `*Norm: ${result.Wbase.fixedValue.toFixed(1)}g* (±${result.Wbase.errorBand95.toFixed(2)})`,
+      `Gross: ${baseRaw.toFixed(1)}g`,
+      `Tare: -${result.Wbase.bias.toFixed(1)}g`,
+      `*Net: ${result.Wbase.fixedValue.toFixed(1)}g* (±${result.Wbase.errorBand95.toFixed(2)})`,
       ``,
       `*${t('final')} Measurement*`,
-      `Raw: ${finalRaw.toFixed(1)}g`,
-      `Bias: -${result.Wfinal.bias.toFixed(1)}g`,
-      `*Norm: ${result.Wfinal.fixedValue.toFixed(1)}g* (±${result.Wfinal.errorBand95.toFixed(2)})`,
+      `Gross: ${finalRaw.toFixed(1)}g`,
+      `Tare: -${result.Wfinal.bias.toFixed(1)}g`,
+      `*Net: ${result.Wfinal.fixedValue.toFixed(1)}g* (±${result.Wfinal.errorBand95.toFixed(2)})`,
       ``,
-      `*${typeLabel}: ${result.percent.toFixed(2)}%*`,
+      `*${typeLabel}: ${result.percent.toFixed(2)}%* (Net)`,
+      `Gross Change: ${grossPercent.toFixed(2)}%`,
       `${t('range')}: ${minRange.toFixed(2)}% — ${maxRange.toFixed(2)}%`,
       `_(±${result.errorBand95Percent.toFixed(2)}% 95% Conf)_`,
       ``,
