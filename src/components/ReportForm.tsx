@@ -123,16 +123,21 @@ export const ReportForm: React.FC<ReportFormProps> = ({ result, onSaved }) => {
     const minRange = result.percent - result.errorBand95Percent;
     const maxRange = result.percent + result.errorBand95Percent;
 
-    // Use pre-calculated means from result object
-    const baseRaw = result.Wbase.meanRaw;
-    const finalRaw = result.Wfinal.meanRaw;
+    // --- CALCULATIONS ---
+    // 1. Gross (Stabilized) = Net(Final) + Bias
+    const baseGrossStab = result.Wbase.fixedValue + result.Wbase.bias;
+    const finalGrossStab = result.Wfinal.fixedValue + result.Wfinal.bias;
+
+    // 2. Net (Standard) = MeanRaw - Bias
+    const baseNetStd = result.Wbase.meanRaw - result.Wbase.bias;
+    const finalNetStd = result.Wfinal.meanRaw - result.Wfinal.bias;
     
     // Check IMU significant presence
     const baseImu = result.Wbase.meanImuAdj;
     const finalImu = result.Wfinal.meanImuAdj;
     const hasImu = Math.abs(baseImu) > 0.01 || Math.abs(finalImu) > 0.01;
 
-    // Use standard gross percent
+    // Gross Percent
     const grossPercent = result.grossPercent;
 
     const reportText = [
@@ -145,17 +150,17 @@ export const ReportForm: React.FC<ReportFormProps> = ({ result, onSaved }) => {
       `${t('dredgeArea')}: ${formData.dredgeArea || '-'}`,
       ``,
       `*${t('base')} ${t('value')}*`,
-      `${t('grossVal')}: ${baseRaw.toFixed(1)}g`,
+      `${t('grossVal')} (Stab): ${baseGrossStab.toFixed(1)}g`,
       `${t('tareVal')}: -${result.Wbase.bias.toFixed(1)}g`,
-      hasImu ? `${t('imuCorrection')}: -${baseImu.toFixed(2)}g (k=${result.Wbase.imuSlope?.toFixed(3)})` : null,
-      `*${t('netVal')}: ${result.Wbase.fixedValue.toFixed(1)}g* (±${result.Wbase.errorBand95.toFixed(2)})`,
+      hasImu ? `${t('netVal')} (${t('raw')}): ${baseNetStd.toFixed(1)}g` : null,
+      `*${t('netVal')} (${t('corrected')}): ${result.Wbase.fixedValue.toFixed(1)}g* (±${result.Wbase.errorBand95.toFixed(2)})`,
       formatSensorStats(result.Wbase, t('base')),
       ``,
       `*${t('final')} ${t('value')}*`,
-      `${t('grossVal')}: ${finalRaw.toFixed(1)}g`,
+      `${t('grossVal')} (Stab): ${finalGrossStab.toFixed(1)}g`,
       `${t('tareVal')}: -${result.Wfinal.bias.toFixed(1)}g`,
-      hasImu ? `${t('imuCorrection')}: -${finalImu.toFixed(2)}g (k=${result.Wfinal.imuSlope?.toFixed(3)})` : null,
-      `*${t('netVal')}: ${result.Wfinal.fixedValue.toFixed(1)}g* (±${result.Wfinal.errorBand95.toFixed(2)})`,
+      hasImu ? `${t('netVal')} (${t('raw')}): ${finalNetStd.toFixed(1)}g` : null,
+      `*${t('netVal')} (${t('corrected')}): ${result.Wfinal.fixedValue.toFixed(1)}g* (±${result.Wfinal.errorBand95.toFixed(2)})`,
       formatSensorStats(result.Wfinal, t('final')),
       ``,
       `*${typeLabel}: ${result.percent.toFixed(2)}%* (${t('netVal')})`,

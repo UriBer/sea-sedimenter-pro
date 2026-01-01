@@ -14,17 +14,33 @@ export const ResultCard: React.FC<ResultCardProps> = ({ result, onReset }) => {
   const minRange = result.percent - result.errorBand95Percent;
   const maxRange = result.percent + result.errorBand95Percent;
 
-  // Use calculated means from SessionResult for consistency
-  const baseRaw = result.Wbase.meanRaw;
-  const finalRaw = result.Wfinal.meanRaw;
-  
-  // IMU Adjustments
+  // --- CALCULATIONS ---
+  // 1. Raw Means (from stats)
+  const baseRawMean = result.Wbase.meanRaw;
+  const finalRawMean = result.Wfinal.meanRaw;
+
+  // 2. IMU Corrections
   const baseImuAdj = result.Wbase.meanImuAdj;
   const finalImuAdj = result.Wfinal.meanImuAdj;
-  const hasSignificantImu = Math.abs(baseImuAdj) > 0.01 || Math.abs(finalImuAdj) > 0.01;
+  const hasImu = Math.abs(baseImuAdj) > 0.01 || Math.abs(finalImuAdj) > 0.01;
 
-  // Gross Percent
+  // 3. Gross (Stabilized) = Raw - IMU_Correction
+  // Note: meanImuAdj is (biasUsed - nominalBias). Positive means we subtracted MORE.
+  // We want the "Effective Gross" that resulted in the net.
+  // Net = Gross_Stab - Bias
+  // So Gross_Stab = Net + Bias
+  const baseGrossStab = result.Wbase.fixedValue + result.Wbase.bias;
+  const finalGrossStab = result.Wfinal.fixedValue + result.Wfinal.bias;
+  
+  // 4. Net (Standard/Unadjusted) = Raw - Bias (ignoring IMU)
+  const baseNetStd = baseRawMean - result.Wbase.bias;
+  const finalNetStd = finalRawMean - result.Wfinal.bias;
+
+  // Gross Percent (based on Stabilized Gross)
   const grossPercent = result.grossPercent;
+  
+  // Standard Net Percent
+  const stdNetPercent = baseNetStd > 0 ? (100 * (baseNetStd - finalNetStd) / baseNetStd) : 0;
 
   return (
     <div className="bg-white dark:bg-slate-900 rounded-xl shadow-xl border border-blue-100 dark:border-slate-700 overflow-hidden mb-10 animate-fade-in transition-colors">
@@ -35,10 +51,10 @@ export const ResultCard: React.FC<ResultCardProps> = ({ result, onReset }) => {
 
       <div className="p-6 text-center">
         
-        {/* Gross Change Display (Secondary) */}
+        {/* Gross Change Display */}
         <div className="mb-8 flex flex-col items-center justify-center opacity-80">
            <span className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-widest mb-2">
-             {t('raw')} {t('change')}
+             {t('grossVal')} {t('change')}
            </span>
            <span className="text-5xl font-bold text-gray-700 dark:text-gray-200 font-mono">
              {grossPercent.toFixed(2)}<span className="text-3xl text-gray-400">%</span>
@@ -48,7 +64,7 @@ export const ResultCard: React.FC<ResultCardProps> = ({ result, onReset }) => {
         {/* Net Change Display (Primary) */}
         <div className="mb-4">
             <span className="text-base font-bold text-nautical-600 dark:text-nautical-400 uppercase tracking-widest mb-2 block">
-                {t('corrected')} {t('change')}
+                {t('netVal')} ({t('corrected')}) {t('change')}
             </span>
             <div className="text-8xl font-extrabold text-nautical-900 dark:text-nautical-100 mb-2 ltr:font-mono tracking-tighter leading-none">
               {result.percent.toFixed(2)}<span className="text-5xl text-gray-400 dark:text-gray-500 align-baseline">%</span>
@@ -76,39 +92,41 @@ export const ResultCard: React.FC<ResultCardProps> = ({ result, onReset }) => {
                 <div className="font-bold text-center text-gray-600 dark:text-gray-300">{t('change')}</div>
             </div>
 
-            {/* Raw Mean Row */}
+            {/* Row 1: Gross (Stabilized) */}
             <div className="grid grid-cols-4 gap-3 items-center mb-3 min-w-[320px]">
-                <div className="text-sm font-bold text-gray-500 dark:text-gray-400">{t('raw')}</div>
-                <div className="text-center font-mono text-xl text-gray-800 dark:text-gray-200">{baseRaw.toFixed(1)}g</div>
-                <div className="text-center font-mono text-xl text-gray-800 dark:text-gray-200">{finalRaw.toFixed(1)}g</div>
+                <div className="text-sm font-bold text-gray-500 dark:text-gray-400">
+                    {t('grossVal')} <span className="text-[10px] block font-normal opacity-70">({hasImu ? t('imuActive') : t('raw')})</span>
+                </div>
+                <div className="text-center font-mono text-xl text-gray-800 dark:text-gray-200">{baseGrossStab.toFixed(1)}g</div>
+                <div className="text-center font-mono text-xl text-gray-800 dark:text-gray-200">{finalGrossStab.toFixed(1)}g</div>
                 <div className="text-center font-mono text-xl text-gray-500 dark:text-gray-400">{grossPercent.toFixed(2)}%</div>
             </div>
 
-             {/* Bias Row */}
+             {/* Row 2: Tare */}
              <div className="grid grid-cols-4 gap-3 items-center mb-3 min-w-[320px]">
-                <div className="text-sm font-bold text-gray-500 dark:text-gray-400">{t('biasApplied')}</div>
+                <div className="text-sm font-bold text-gray-500 dark:text-gray-400">{t('tareVal')}</div>
                 <div className="text-center font-mono text-lg text-red-400">-{result.Wbase.bias.toFixed(1)}g</div>
                 <div className="text-center font-mono text-lg text-red-400">-{result.Wfinal.bias.toFixed(1)}g</div>
                 <div className="text-center font-mono text-gray-300">-</div>
             </div>
 
-            {/* IMU Adjustment Row (Only show if significant) */}
-            {hasSignificantImu && (
-                <div className="grid grid-cols-4 gap-3 items-center mb-3 min-w-[320px]">
-                    <div className="text-sm font-bold text-purple-500 dark:text-purple-400">{t('imuCorrection')}</div>
-                    <div className="text-center font-mono text-lg text-purple-600 dark:text-purple-300">
-                        {baseImuAdj > 0 ? '-' : '+'}{Math.abs(baseImuAdj).toFixed(2)}g
+            {/* Row 3: Net (Standard/Unadjusted) - Only if IMU active to show contrast */}
+            {hasImu && (
+                <div className="grid grid-cols-4 gap-3 items-center mb-3 min-w-[320px] opacity-60">
+                    <div className="text-sm font-bold text-gray-500 dark:text-gray-400">
+                        {t('netVal')} <span className="text-[10px] block font-normal">({t('raw')})</span>
                     </div>
-                    <div className="text-center font-mono text-lg text-purple-600 dark:text-purple-300">
-                        {finalImuAdj > 0 ? '-' : '+'}{Math.abs(finalImuAdj).toFixed(2)}g
-                    </div>
-                    <div className="text-center font-mono text-gray-300">-</div>
+                    <div className="text-center font-mono text-lg text-gray-600 dark:text-gray-400">{baseNetStd.toFixed(1)}g</div>
+                    <div className="text-center font-mono text-lg text-gray-600 dark:text-gray-400">{finalNetStd.toFixed(1)}g</div>
+                    <div className="text-center font-mono text-lg text-gray-400">{stdNetPercent.toFixed(2)}%</div>
                 </div>
             )}
 
-            {/* Net Row */}
+            {/* Row 4: Net (Corrected) */}
             <div className="grid grid-cols-4 gap-3 items-center pt-3 border-t border-gray-200 dark:border-slate-700 bg-white dark:bg-slate-900 rounded p-3 min-w-[320px]">
-                <div className="text-sm font-extrabold text-nautical-700 dark:text-nautical-400">{t('corrected')}</div>
+                <div className="text-sm font-extrabold text-nautical-700 dark:text-nautical-400">
+                    {t('netVal')} <span className="text-[10px] block font-normal text-nautical-500">({t('corrected')})</span>
+                </div>
                 <div className="text-center font-mono font-bold text-2xl text-nautical-900 dark:text-white">{result.Wbase.fixedValue.toFixed(1)}g</div>
                 <div className="text-center font-mono font-bold text-2xl text-nautical-900 dark:text-white">{result.Wfinal.fixedValue.toFixed(1)}g</div>
                 <div className="text-center font-mono font-bold text-2xl text-nautical-700 dark:text-nautical-300">{result.percent.toFixed(2)}%</div>
