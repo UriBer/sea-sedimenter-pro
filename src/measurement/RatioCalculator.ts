@@ -7,6 +7,10 @@ export class RatioCalculator {
     const Wf = final.fixedValue;
     const notes: string[] = [];
 
+    // Detect Single Shot Mode: If Bias is exactly 0 and Tare Sigma is 0, we assume no tare was used.
+    // Also, usually TareModel would be 'single-shot' if we passed that info down, but checking values works too for MVP.
+    const isSingleShot = base.bias === 0 && base.tareSigma === 0 && final.bias === 0;
+
     if (Wb <= 0) {
         notes.push("Base weight <= 0. Cannot compute ratio.");
         return {
@@ -21,6 +25,7 @@ export class RatioCalculator {
             relativeErrorPercent95: 0,
             k95: 2,
             nEff: 0,
+            isSingleShot,
             notes
         };
     }
@@ -74,6 +79,7 @@ export class RatioCalculator {
         relativeErrorPercent95,
         k95,
         nEff,
+        isSingleShot,
         notes
     };
   }

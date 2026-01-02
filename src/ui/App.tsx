@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { TarePanel } from '../components/TarePanel';
 import { SessionPanel } from '../components/SessionPanel';
 import { ResultCard } from '../components/ResultCard';
@@ -9,11 +9,11 @@ import { SensorBadge } from '../components/SensorBadge';
 import { useSensors } from '../hooks/useSensors';
 import { TareModel, SessionResult, RatioResult } from '../types';
 import { RatioCalculator } from '../measurement/RatioCalculator';
-import { Anchor, Calculator, History, HelpCircle, Moon, Sun, Globe } from 'lucide-react';
+import { Anchor, Calculator, History, HelpCircle, Moon, Sun, Globe, ToggleLeft, ToggleRight, Scale } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContext';
 
 const App: React.FC = () => {
-  const { t, isDarkMode, toggleTheme, setLanguage, language } = useSettings();
+  const { t, isDarkMode, toggleTheme, setLanguage, language, singleShotMode, toggleSingleShot } = useSettings();
   const sensors = useSensors();
 
   // --- STATE ---
@@ -35,9 +35,26 @@ const App: React.FC = () => {
   const [showHelp, setShowHelp] = useState(false);
   const [showLangMenu, setShowLangMenu] = useState(false);
 
+  // Effect to handle Single Shot Mode Switching
+  useEffect(() => {
+    handleResetAll();
+    if (singleShotMode) {
+      // Inject dummy tare model so sessions are enabled immediately
+      setTareModel({
+        isReady: true,
+        method: 'single-shot',
+        bias: 0,
+        tareUncertainty: 0,
+        n: 0
+      });
+    } else {
+      setTareModel(null);
+    }
+  }, [singleShotMode]);
+
   // Toggle IMU mode if no tare model is locked
   const toggleImu = () => {
-    if (tareModel) return; 
+    if (tareModel && !singleShotMode) return; 
     setImuEnabled(!imuEnabled);
   };
 
@@ -56,7 +73,9 @@ const App: React.FC = () => {
     setBaseResult(null);
     setFinalResult(null);
     setRatioResult(null);
-    setTareModel(null);
+    if (!singleShotMode) {
+      setTareModel(null);
+    }
   };
 
   return (
@@ -103,6 +122,24 @@ const App: React.FC = () => {
 
       <main className="w-full max-w-md p-4 flex-1 pb-20">
         
+        {/* Mode Toggle */}
+        {!ratioResult && (
+           <div className="flex items-center justify-between bg-white dark:bg-slate-900 p-3 rounded-lg mb-4 shadow border border-gray-200 dark:border-slate-800">
+              <div className="flex items-center gap-3">
+                 <Scale size={20} className={singleShotMode ? "text-orange-500" : "text-nautical-500"} />
+                 <div className="flex flex-col">
+                    <span className="text-sm font-bold text-gray-800 dark:text-gray-100">{singleShotMode ? t('singleShot') : t('tareConfig')}</span>
+                    <span className="text-[10px] text-gray-500 dark:text-gray-400">
+                        {singleShotMode ? t('singleShotDesc') : t('helpTareBody').substring(0, 30) + "..."}
+                    </span>
+                 </div>
+              </div>
+              <button onClick={toggleSingleShot} className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200 transition-colors">
+                 {singleShotMode ? <ToggleRight size={36} className="text-orange-500" /> : <ToggleLeft size={36} />}
+              </button>
+           </div>
+        )}
+
         {/* Sensor Badge */}
         <SensorBadge 
            state={sensors.sensorState}
@@ -110,7 +147,8 @@ const App: React.FC = () => {
            onToggle={sensors.sensorState.isActive ? sensors.stopSensors : sensors.startSensors}
         />
 
-        {!ratioResult && (
+        {/* Tare Panel (Only show if not Single Shot) */}
+        {!ratioResult && !singleShotMode && (
            <TarePanel 
              onLock={setTareModel}
              activeModel={tareModel} 

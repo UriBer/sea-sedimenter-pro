@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { SavedReport } from '../types';
-import { X, Trash2, Calendar, ArrowRight, Anchor, Share2 } from 'lucide-react';
+import { X, Trash2, Calendar, ArrowRight, Anchor, Share2, Scale } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContext';
 
 interface HistoryModalProps {
@@ -38,6 +38,7 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ onClose }) => {
     const typeLabel = isLoss ? t('weightLoss') : t('weightChange');
     const minRange = result.percent - result.errorBand95Percent;
     const maxRange = result.percent + result.errorBand95Percent;
+    const isSingleShot = result.isSingleShot;
 
     // Calculate Raw Values
     const baseRaw = result.Wbase.fixedValue + result.Wbase.bias;
@@ -46,33 +47,37 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ onClose }) => {
     // Use grossPercent if available (new format), else calculate on fly (old format)
     const grossPercent = result.grossPercent ?? (baseRaw > 0 ? (100 * (baseRaw - finalRaw) / baseRaw) : 0);
 
-    const reportText = [
+    // Build text
+    const header = [
       `*${t('appTitle')} ${t('reportHeader')}*`,
+      isSingleShot ? `_(${t('singleShotBadge')})_` : null,
       `------------------`,
       `${t('vessel')}: ${report.vesselName}`,
       `${t('operator')}: ${report.operatorName}`,
       `${t('date')}: ${new Date(report.date).toLocaleString()}`,
       `${t('loadNum')}: ${report.loadNumber || '-'}`,
       `${t('dredgeArea')}: ${report.dredgeArea || '-'}`,
+      ``
+    ];
+
+    const body = [
+        `*${t('base')} ${t('value')}*`,
+        `${t('value')}: ${result.Wbase.fixedValue.toFixed(1)}g (±${result.Wbase.errorBand95.toFixed(2)})`,
+        ``,
+        `*${t('final')} ${t('value')}*`,
+        `${t('value')}: ${result.Wfinal.fixedValue.toFixed(1)}g (±${result.Wfinal.errorBand95.toFixed(2)})`,
+    ];
+
+    const footer = [
       ``,
-      `*${t('base')} ${t('value')}*`,
-      `${t('grossVal')}: ${baseRaw.toFixed(1)}g`,
-      `${t('tareVal')}: -${result.Wbase.bias.toFixed(1)}g`,
-      `*${t('netVal')}: ${result.Wbase.fixedValue.toFixed(1)}g* (±${result.Wbase.errorBand95.toFixed(2)})`,
-      ``,
-      `*${t('final')} ${t('value')}*`,
-      `${t('grossVal')}: ${finalRaw.toFixed(1)}g`,
-      `${t('tareVal')}: -${result.Wfinal.bias.toFixed(1)}g`,
-      `*${t('netVal')}: ${result.Wfinal.fixedValue.toFixed(1)}g* (±${result.Wfinal.errorBand95.toFixed(2)})`,
-      ``,
-      `*${typeLabel}: ${result.percent.toFixed(2)}%* (${t('netVal')})`,
-      `${t('grossVal')} ${t('change')}: ${grossPercent.toFixed(2)}%`,
+      `*${typeLabel}: ${result.percent.toFixed(2)}%*`,
       `${t('range')}: ${minRange.toFixed(2)}% — ${maxRange.toFixed(2)}%`,
       `_(±${result.errorBand95Percent.toFixed(2)}% ${t('conf')})_`,
       ``,
       `_${t('disclaimer')}_`
-    ].join('\n');
+    ];
 
+    const reportText = [...header, ...body, ...footer].filter(x => x !== null).join('\n');
     window.open(`https://wa.me/?text=${encodeURIComponent(reportText)}`, '_blank');
   };
 
@@ -104,9 +109,15 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ onClose }) => {
               const maxRange = report.result.percent + report.result.errorBand95Percent;
               
               return (
-              <div key={report.id} className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow">
+              <div key={report.id} className="bg-white dark:bg-slate-900 border border-gray-200 dark:border-slate-800 rounded-xl p-5 shadow-sm hover:shadow-md transition-shadow relative overflow-hidden">
+                {report.result.isSingleShot && (
+                    <div className="absolute top-0 right-0 bg-orange-500 text-white text-[10px] font-bold px-2 py-1 rounded-bl shadow">
+                        {t('singleShotBadge')}
+                    </div>
+                )}
+
                 {/* Card Header: Vessel & Date */}
-                <div className="flex justify-between items-start mb-4 pb-4 border-b border-gray-100 dark:border-slate-800">
+                <div className="flex justify-between items-start mb-4 pb-4 border-b border-gray-100 dark:border-slate-800 mt-2">
                   <div>
                     <div className="font-bold text-nautical-900 dark:text-nautical-100 text-2xl mb-1">{report.vesselName}</div>
                     <div className="text-base text-gray-500 dark:text-gray-400">{new Date(report.createdAt).toLocaleString()}</div>
@@ -155,9 +166,6 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ onClose }) => {
                       <span className="font-mono font-bold text-slate-700 dark:text-slate-200 text-2xl">
                         {report.result.Wbase.fixedValue.toFixed(1)}<span className="text-sm">g</span>
                       </span>
-                      <span className="text-xs text-slate-400 dark:text-slate-500 font-mono">
-                        ±{report.result.Wbase.errorBand95.toFixed(2)}
-                      </span>
                     </div>
 
                     <div className="w-2/12 flex justify-center text-slate-300 dark:text-slate-600">
@@ -168,9 +176,6 @@ export const HistoryModal: React.FC<HistoryModalProps> = ({ onClose }) => {
                       <span className="text-xs text-slate-400 dark:text-slate-500 uppercase font-bold tracking-wider mb-1">{t('final')}</span>
                       <span className="font-mono font-bold text-slate-700 dark:text-slate-200 text-2xl">
                         {report.result.Wfinal.fixedValue.toFixed(1)}<span className="text-sm">g</span>
-                      </span>
-                      <span className="text-xs text-slate-400 dark:text-slate-500 font-mono">
-                        ±{report.result.Wfinal.errorBand95.toFixed(2)}
                       </span>
                     </div>
                   </div>

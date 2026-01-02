@@ -122,49 +122,35 @@ export const ReportForm: React.FC<ReportFormProps> = ({ result, onSaved }) => {
     const typeLabel = isLoss ? t('weightLoss') : t('weightChange');
     const minRange = result.percent - result.errorBand95Percent;
     const maxRange = result.percent + result.errorBand95Percent;
+    const isSingleShot = result.isSingleShot;
 
     // --- CALCULATIONS ---
-    // 1. Gross (Stabilized) = Net(Final) + Bias
     const baseGrossStab = result.Wbase.fixedValue + result.Wbase.bias;
     const finalGrossStab = result.Wfinal.fixedValue + result.Wfinal.bias;
-
-    // 2. Net (Standard) = MeanRaw - Bias
     const baseNetStd = result.Wbase.meanRaw - result.Wbase.bias;
     const finalNetStd = result.Wfinal.meanRaw - result.Wfinal.bias;
-    
-    // Check IMU significant presence
-    const baseImu = result.Wbase.meanImuAdj;
-    const finalImu = result.Wfinal.meanImuAdj;
-    const hasImu = Math.abs(baseImu) > 0.01 || Math.abs(finalImu) > 0.01;
-
-    // Gross Percent
+    const hasImu = Math.abs(result.Wbase.meanImuAdj) > 0.01 || Math.abs(result.Wfinal.meanImuAdj) > 0.01;
     const grossPercent = result.grossPercent;
 
-    const reportText = [
+    // Construct lines based on mode
+    let reportText: string;
+
+    const header = [
       `*${t('appTitle')} ${t('reportHeader')}*`,
+      isSingleShot ? `_(${t('singleShotBadge')})_` : null,
       `------------------`,
       `${t('vessel')}: ${formData.vesselName}`,
       `${t('operator')}: ${formData.operatorName}`,
       `${t('date')}: ${new Date(formData.date).toLocaleString()}`,
       `${t('loadNum')}: ${formData.loadNumber || '-'}`,
       `${t('dredgeArea')}: ${formData.dredgeArea || '-'}`,
+      ``
+    ];
+
+    const footer = [
       ``,
-      `*${t('base')} ${t('value')}*`,
-      `${t('grossVal')} (Stab): ${baseGrossStab.toFixed(1)}g`,
-      `${t('tareVal')}: -${result.Wbase.bias.toFixed(1)}g`,
-      hasImu ? `${t('netVal')} (${t('raw')}): ${baseNetStd.toFixed(1)}g` : null,
-      `*${t('netVal')} (${t('corrected')}): ${result.Wbase.fixedValue.toFixed(1)}g* (±${result.Wbase.errorBand95.toFixed(2)})`,
-      formatSensorStats(result.Wbase, t('base')),
-      ``,
-      `*${t('final')} ${t('value')}*`,
-      `${t('grossVal')} (Stab): ${finalGrossStab.toFixed(1)}g`,
-      `${t('tareVal')}: -${result.Wfinal.bias.toFixed(1)}g`,
-      hasImu ? `${t('netVal')} (${t('raw')}): ${finalNetStd.toFixed(1)}g` : null,
-      `*${t('netVal')} (${t('corrected')}): ${result.Wfinal.fixedValue.toFixed(1)}g* (±${result.Wfinal.errorBand95.toFixed(2)})`,
-      formatSensorStats(result.Wfinal, t('final')),
-      ``,
-      `*${typeLabel}: ${result.percent.toFixed(2)}%* (${t('netVal')})`,
-      `${t('grossVal')} ${t('change')}: ${grossPercent.toFixed(2)}%`,
+      `*${typeLabel}: ${result.percent.toFixed(2)}%* ${!isSingleShot ? `(${t('netVal')})` : ''}`,
+      !isSingleShot ? `${t('grossVal')} ${t('change')}: ${grossPercent.toFixed(2)}%` : null,
       `${t('range')}: ${minRange.toFixed(2)}% — ${maxRange.toFixed(2)}%`,
       `_(±${result.errorBand95Percent.toFixed(2)}% ${t('conf')})_`,
       ``,
@@ -174,7 +160,40 @@ export const ReportForm: React.FC<ReportFormProps> = ({ result, onSaved }) => {
       formatMeasurements(result.Wfinal, t('final')),
       ``,
       `_${t('disclaimer')}_`
-    ].filter(line => line !== null).join('\n');
+    ];
+
+    if (isSingleShot) {
+        // Single Shot Format
+        const body = [
+            `*${t('base')} ${t('value')}*`,
+            `${t('value')}: ${result.Wbase.fixedValue.toFixed(1)}g (±${result.Wbase.errorBand95.toFixed(2)})`,
+            formatSensorStats(result.Wbase, t('base')),
+            ``,
+            `*${t('final')} ${t('value')}*`,
+            `${t('value')}: ${result.Wfinal.fixedValue.toFixed(1)}g (±${result.Wfinal.errorBand95.toFixed(2)})`,
+            formatSensorStats(result.Wfinal, t('final'))
+        ];
+        reportText = [...header, ...body, ...footer].filter(x => x !== null).join('\n');
+
+    } else {
+        // Full Format
+        const body = [
+            `*${t('base')} ${t('value')}*`,
+            `${t('grossVal')} (Stab): ${baseGrossStab.toFixed(1)}g`,
+            `${t('tareVal')}: -${result.Wbase.bias.toFixed(1)}g`,
+            hasImu ? `${t('netVal')} (${t('raw')}): ${baseNetStd.toFixed(1)}g` : null,
+            `*${t('netVal')} (${t('corrected')}): ${result.Wbase.fixedValue.toFixed(1)}g* (±${result.Wbase.errorBand95.toFixed(2)})`,
+            formatSensorStats(result.Wbase, t('base')),
+            ``,
+            `*${t('final')} ${t('value')}*`,
+            `${t('grossVal')} (Stab): ${finalGrossStab.toFixed(1)}g`,
+            `${t('tareVal')}: -${result.Wfinal.bias.toFixed(1)}g`,
+            hasImu ? `${t('netVal')} (${t('raw')}): ${finalNetStd.toFixed(1)}g` : null,
+            `*${t('netVal')} (${t('corrected')}): ${result.Wfinal.fixedValue.toFixed(1)}g* (±${result.Wfinal.errorBand95.toFixed(2)})`,
+            formatSensorStats(result.Wfinal, t('final'))
+        ];
+        reportText = [...header, ...body, ...footer].filter(x => x !== null).join('\n');
+    }
 
     window.open(`https://wa.me/?text=${encodeURIComponent(reportText)}`, '_blank');
   };

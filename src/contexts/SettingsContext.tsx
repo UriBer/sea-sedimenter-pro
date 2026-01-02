@@ -8,6 +8,8 @@ interface SettingsContextType {
   setLanguage: (lang: Language) => void;
   direction: Direction;
   t: (key: string) => string;
+  singleShotMode: boolean;
+  toggleSingleShot: () => void;
 }
 
 const SettingsContext = createContext<SettingsContextType | undefined>(undefined);
@@ -15,6 +17,7 @@ const SettingsContext = createContext<SettingsContextType | undefined>(undefined
 export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [language, setLanguage] = useState<Language>('en');
+  const [singleShotMode, setSingleShotMode] = useState(false);
 
   useEffect(() => {
     // Load persisted settings
@@ -26,6 +29,11 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     if (savedTheme === 'dark') {
       setIsDarkMode(true);
       document.documentElement.classList.add('dark');
+    }
+    
+    const savedMode = localStorage.getItem('sea_sed_single_shot');
+    if (savedMode === 'true') {
+      setSingleShotMode(true);
     }
   }, []);
 
@@ -51,6 +59,14 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
     });
   };
 
+  const toggleSingleShot = () => {
+    setSingleShotMode(prev => {
+      const next = !prev;
+      localStorage.setItem('sea_sed_single_shot', String(next));
+      return next;
+    });
+  };
+
   const t = (key: string): string => {
     const dict = translations[language] || translations['en'];
     // @ts-ignore
@@ -66,7 +82,9 @@ export const SettingsProvider: React.FC<{ children: ReactNode }> = ({ children }
       language, 
       setLanguage: handleSetLanguage, 
       direction, 
-      t 
+      t,
+      singleShotMode,
+      toggleSingleShot
     }}>
       {children}
     </SettingsContext.Provider>

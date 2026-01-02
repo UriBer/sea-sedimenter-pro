@@ -29,7 +29,7 @@ export interface TareSample {
 
 export interface TareModel {
   isReady: boolean;
-  method: 'basic' | 'imu-regression';
+  method: 'basic' | 'imu-regression' | 'single-shot';
   // Basic parameters
   bias: number;
   tareUncertainty: number; // 1-sigma (T)
@@ -96,6 +96,8 @@ export interface RatioResult {
   relativeErrorPercent95: number; 
   k95: number; // interpolated factor used
   nEff: number; // effective n used for k interpolation
+  
+  isSingleShot: boolean; // Flag for Gross Only mode
   notes?: string[];
 }
 
