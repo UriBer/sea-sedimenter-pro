@@ -18,6 +18,11 @@ A shipboard weighing assistant for sediment analysis with robust uncertainty cal
 - **History Management**: View and manage saved reports locally
 - **Single Shot Mode**: Option for gross-only measurements without tare correction
 
+## Usage Workflow
+
+- Live application available at:
+  https://sea-sedimenter-326228314207.us-west1.run.app 
+
 ## Technology Stack
 
 - **React 19** - UI framework
@@ -156,7 +161,7 @@ Licensed under GNU GPLv3
 
 ## Disclaimer
 
-This application is provided for scientific and industrial use. Always verify critical measurements with appropriate quality control procedures.
+This application is provided for scientific and industrial use and provided as is without any warranty. Always verify critical measurements with appropriate quality control procedures.
 
 ---
 
